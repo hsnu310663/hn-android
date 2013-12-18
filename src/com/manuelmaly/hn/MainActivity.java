@@ -153,13 +153,14 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     	if( main_search_text.getText().toString() == ""){}
     	else if(  compare_text != main_search_text.getText().toString())
     	{
+    	    compare_text = main_search_text.getText().toString();
     		new Thread(Search).start();		
-    		/*
-    		compare_text = main_search_text.getText().toString();
-    	  	search = new HNSearch(compare_text) ;
-    	   	showFeed(search.get_Feed());*/
     	}
     	else{}
+    	 mActionbarRefresh.setImageResource(R.drawable.refresh);
+         
+         mActionbarRefreshProgress.setVisibility(View.VISIBLE);
+         mActionbarRefresh.setVisibility(View.GONE);
     }
     private Handler SearchThreadHandler = new Handler() {
         public void handleMessage(Message msg) {
@@ -170,18 +171,18 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
             default:
             break;
             }
+        	mActionbarRefresh.setVisibility(View.VISIBLE);
+        	mActionbarRefreshProgress.setVisibility(View.GONE);
         }
     };
     
     
     private Runnable Search = new Runnable(){
      public void run(){
-       compare_text = main_search_text.getText().toString();
   	   search = new HNSearch(compare_text) ;  	   
        SearchThreadHandler.sendEmptyMessage(0);
     //   mActionbarRefresh.setVisibility(View.VISIBLE);
    //    mActionbarRefreshProgress.setVisibility(View.GONE);
-      // return ;
      }
     };
  

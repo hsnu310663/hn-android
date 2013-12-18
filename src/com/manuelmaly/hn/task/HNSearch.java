@@ -8,13 +8,6 @@ import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.entity.BufferedHttpEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,14 +26,16 @@ public class HNSearch {
 	public HNSearch(String keyword) {
 		SearchWord = keyword;
 		Feed = new HNFeed(new ArrayList<HNPost>(), null, "");
-		JSONObject json = null;
-		Search(json);
-		json = null;
+		Search();
 	}
-	
 
-	public void Search(JSONObject json) {
+	public void set_keyword(String keyword) {
+		SearchWord = keyword;
+	}
+
+	public void Search() {
 		String jsonText = null;
+		JSONObject json = null;
 		try {
 			InputStream is = new URL(get_URL()).openStream();
 			BufferedReader rd = new BufferedReader(new InputStreamReader(is,
@@ -60,11 +55,11 @@ public class HNSearch {
 
 	public String get_URL() {
 		String URL = REQUEST_URL + SearchWord + "&limit=" + limit;
-	/*	switch (sort_mode) {
-		case 0:
+		switch (sort_mode) {
+		case 1:
 			URL = URL + "&sortby=create_ts%20desc";
 			break;
-		}*/
+		}
 		return URL;
 	}
 
