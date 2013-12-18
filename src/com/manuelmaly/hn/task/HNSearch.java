@@ -54,7 +54,7 @@ public class HNSearch {
 	}
 
 	public String get_URL() {
-		String URL = REQUEST_URL + SearchWord + "&limit=" + limit;
+		String URL = REQUEST_URL + SearchWord + "&limit=" + limit + "&sortby=type%20desc";
 		switch (sort_mode) {
 		case 1:
 			URL = URL + "&sortby=create_ts%20desc";
