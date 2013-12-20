@@ -18,28 +18,31 @@ import com.manuelmaly.hn.parser.BaseHTMLParser;
 public class HNSearch {
 
 	HNFeed Feed;
-	String REQUEST_URL = "http://api.thriftdb.com/api.hnsearch.com/items/_search?q=";
+	String REQUEST_URL = "http://api.thriftdb.com/api.hnsearch.com/items/_search?";
 	int limit = 60;
 	int sort_mode = 0;
-	String SearchWord = null;
+	String Rank[][];
+	int rank_number = 12;
 
-	public HNSearch(String keyword) {
-		SearchWord = keyword;
+	public HNSearch() {
+		init();
 		Feed = new HNFeed(new ArrayList<HNPost>(), null, "");
-		Search();
 	}
 
+	public String get_keyword(){
+	  return Rank[0][1];
+	}
 	public void set_keyword(String keyword) {
-		SearchWord = keyword;
+		Rank[0][1] = keyword;
 	}
 
 	public void Search() {
+		Feed = new HNFeed(new ArrayList<HNPost>(), null, "");
 		String jsonText = null;
 		JSONObject json = null;
 		try {
 			InputStream is = new URL(get_URL()).openStream();
-			BufferedReader rd = new BufferedReader(new InputStreamReader(is,
-					Charset.forName("UTF-8")));
+			BufferedReader rd = new BufferedReader(new InputStreamReader(is,Charset.forName("UTF-8")));
 			jsonText = readAll(rd);
 			json = new JSONObject(jsonText);
 			is.close();
@@ -49,17 +52,20 @@ public class HNSearch {
 				Feed.addPost(parser(temp));
 			}
 			result = null;
-		} catch (Exception e) {
+		} 
+		catch (Exception e) {
 		}
 	}
 
 	public String get_URL() {
-		String URL = REQUEST_URL + SearchWord + "&limit=" + limit + "&sortby=type%20desc";
 		switch (sort_mode) {
-		case 1:
-			URL = URL + "&sortby=create_ts%20desc";
+		case 0:
+			Rank[10][1] =  "create_ts%20desc";
 			break;
 		}
+		String URL = REQUEST_URL;
+		for(int i = 0;i<rank_number;i++)
+				URL = URL + "&" + Rank[i][0] + "=" + Rank[i][1];
 		return URL;
 	}
 
@@ -76,12 +82,10 @@ public class HNSearch {
 		return sb.toString();
 	}
 
-	public static JSONObject readJsonFromUrl(String url) throws IOException,
-			JSONException {
+	public static JSONObject readJsonFromUrl(String url) throws IOException,JSONException {
 		InputStream is = new URL(url).openStream();
 		try {
-			BufferedReader rd = new BufferedReader(new InputStreamReader(is,
-					Charset.forName("UTF-8")));
+			BufferedReader rd = new BufferedReader(new InputStreamReader(is,Charset.forName("UTF-8")));
 			String jsonText = readAll(rd);
 			JSONObject json = new JSONObject(jsonText);
 			return json;
@@ -102,9 +106,7 @@ public class HNSearch {
 			num_comments = item.getString("num_comments");
 			points = item.getString("points");
 			mUpvoteURL = null;
-			result = new HNPost(url, title, mURLDomain, username, id,
-					Integer.parseInt(num_comments), Integer.parseInt(points),
-					mUpvoteURL);
+			result = new HNPost(url, title, mURLDomain, username, id,Integer.parseInt(num_comments), Integer.parseInt(points),mUpvoteURL);
 		} catch (Exception e) {
 		}
 		return result;
@@ -112,6 +114,22 @@ public class HNSearch {
 
 	public HNFeed get_Feed() {
 		return Feed;
+	}
+	
+	void init(){
+		Rank = new String[rank_number][2];
+		Rank[0][0] = "q";																Rank[0][1]= "";
+		Rank[1][0] = "weights[title]";													Rank[1][1]="2.0";
+		Rank[2][0] = "weights[text]";													Rank[2][1]="0";
+		Rank[3][0] = "weights[url]";													Rank[3][1]="0.7";
+		Rank[4][0] = "weights[type]";													Rank[4][1]="1.0";
+		Rank[5][0] = "weights[domain]";													Rank[5][1]="2.0";
+		Rank[6][0] = "boosts[fields][points]";											Rank[6][1]="0.15";
+		Rank[7][0] = "boosts[fields][num_comments]";									Rank[7][1]="0.15";
+		Rank[8][0] = "boosts[functions][pow(2,div(div(ms(create_ts,NOW),3600000),72))]";Rank[8][1]="200.0";
+		Rank[9][0] = "pretty_print";													Rank[9][1]="true";
+		Rank[10][0] = "sortby";                 										Rank[10][1]="";
+		Rank[11][0] = "limit";                 										    Rank[11][1]=""+limit;
 	}
 
 }

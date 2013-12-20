@@ -1,18 +1,9 @@
 package com.manuelmaly.hn;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.nio.charset.Charset;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.R.bool;
 import android.app.Activity;
@@ -119,7 +110,6 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     String mCurrentFontSize = null;
     int mFontSizeTitle;
     int mFontSizeDetails;
-    String compare_text;
 
     private static final int TASKCODE_LOAD_FEED = 10;
     private static final int TASKCODE_LOAD_MORE_POSTS = 20;
@@ -142,7 +132,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         mPostsList.setAdapter(mPostsListAdapter);
 
           mEmptyListPlaceholder.setTypeface(FontHelper.getComfortaa(this, true));
-          compare_text ="";
+          search = new HNSearch();
           loadIntermediateFeedFromStore();
           startFeedLoading();
     }
@@ -151,9 +141,8 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     void main_search()  {
     	open_search();
     	if( main_search_text.getText().toString() == ""){}
-    	else if(  compare_text != main_search_text.getText().toString())
+    	else if(  search.get_keyword() != main_search_text.getText().toString())
     	{
-    	    compare_text = main_search_text.getText().toString();
     		new Thread(Search).start();		
     	}
     	else{}
@@ -179,10 +168,9 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     
     private Runnable Search = new Runnable(){
      public void run(){
-  	   search = new HNSearch(compare_text) ;  	   
+ 	   search.set_keyword(main_search_text.getText().toString());
+  	   search.Search() ;  	   
        SearchThreadHandler.sendEmptyMessage(0);
-    //   mActionbarRefresh.setVisibility(View.VISIBLE);
-   //    mActionbarRefreshProgress.setVisibility(View.GONE);
      }
     };
  
@@ -217,7 +205,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 
     @Click(R.id.actionbar_refresh_container)
     void refreshClicked() {
-    	compare_text ="";
+    	search.set_keyword("");
         if (HNFeedTaskMainFeed.isRunning(getApplicationContext()))
             HNFeedTaskMainFeed.stopCurrent(getApplicationContext());
         else
