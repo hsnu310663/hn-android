@@ -32,7 +32,7 @@ import com.manuelmaly.hn.model.HNFeed;
 
 @EActivity(R.layout.article_activity)
 public class ArticleReaderActivity extends Activity {
-
+	
 	private static final String WEB_VIEW_SAVED_STATE_KEY = "webViewSavedState";
 	public static final String EXTRA_HNPOST = "HNPOST";
 	public static final String EXTRA_HTMLPROVIDER_OVERRIDE = "HTMLPROVIDER_OVERRIDE";
@@ -90,6 +90,7 @@ public class ArticleReaderActivity extends Activity {
     @AfterViews
     @SuppressLint("SetJavaScriptEnabled")
     public void init() {
+   
         mActionbarTitle.setTypeface(FontHelper.getComfortaa(this, true));
         mActionbarTitle.setText(getString(R.string.article));
         mActionbarTitle.setOnClickListener(new OnClickListener() {
