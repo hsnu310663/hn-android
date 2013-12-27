@@ -6,6 +6,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,9 +21,13 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.Toast;
+import android.widget.PopupWindow.OnDismissListener;
 
 import com.googlecode.androidannotations.annotations.AfterViews;
+import com.googlecode.androidannotations.annotations.Click;
 import com.googlecode.androidannotations.annotations.EActivity;
 import com.googlecode.androidannotations.annotations.SystemService;
 import com.googlecode.androidannotations.annotations.ViewById;
@@ -32,7 +37,7 @@ import com.manuelmaly.hn.model.HNFeed;
 
 @EActivity(R.layout.article_activity)
 public class ArticleReaderActivity extends Activity {
-
+	
 	private static final String WEB_VIEW_SAVED_STATE_KEY = "webViewSavedState";
 	public static final String EXTRA_HNPOST = "HNPOST";
 	public static final String EXTRA_HTMLPROVIDER_OVERRIDE = "HTMLPROVIDER_OVERRIDE";
@@ -59,11 +64,8 @@ public class ArticleReaderActivity extends Activity {
     @ViewById(R.id.actionbar_back)
     ImageView mActionbarBack;
     
-    @ViewById(R.id.actionbar_translate)
-    ImageView mActionbarTranslate;
-
-	@ViewById(R.id.actionbar_share)
-	ImageView mActionbarShare;
+    @ViewById(R.id.actionbar_share)
+	ImageView mActionbarMore;
 
 	@ViewById(R.id.actionbar_refresh)
 	ImageView mActionbarRefresh;
@@ -90,10 +92,12 @@ public class ArticleReaderActivity extends Activity {
     @AfterViews
     @SuppressLint("SetJavaScriptEnabled")
     public void init() {
+   
         mActionbarTitle.setTypeface(FontHelper.getComfortaa(this, true));
         mActionbarTitle.setText(getString(R.string.article));
         mActionbarTitle.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
+            	
                 Intent i = new Intent(ArticleReaderActivity.this, CommentsActivity_.class);
                 i.putExtra(CommentsActivity.EXTRA_HNPOST, mPost);
                 if (getIntent().getStringExtra(EXTRA_HTMLPROVIDER_OVERRIDE) != null)
@@ -110,13 +114,6 @@ public class ArticleReaderActivity extends Activity {
             }
         });
         
-        mActionbarTranslate.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-            	translateFlag = !translateFlag;
-            	mWebView.loadUrl(getArticleViewURL(mPost, mHtmlProvider, ArticleReaderActivity.this));
-            }
-        });
-
         mActionbarRefresh.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 if (mWebView.getProgress() < 100 && mIsLoading) {
@@ -129,16 +126,6 @@ public class ArticleReaderActivity extends Activity {
             }
         });
 
-        mActionbarShare.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                Intent i = new Intent(Intent.ACTION_SEND);
-                i.setType("text/plain");
-                i.putExtra(Intent.EXTRA_SUBJECT, mPost.getTitle());
-                i.putExtra(Intent.EXTRA_TEXT, mPost.getURL());
-                startActivity(Intent.createChooser(i, getString(R.string.share_article_url)));
-            }
-        });
-        
         translateFlag = false;
         
 		position = (int) getIntent().getIntExtra(EXTRA_POSITION, -1);
@@ -182,6 +169,65 @@ public class ArticleReaderActivity extends Activity {
 		mActionbarRefreshProgress.setVisibility(loading ? View.VISIBLE
 				: View.GONE);
 		mActionbarRefresh.setVisibility(loading ? View.GONE : View.VISIBLE);
+    }
+
+    @Click(R.id.actionbar_share)
+    void moreClicked() {
+        mActionbarMore.setSelected(true);
+        LinearLayout moreContentView = (LinearLayout) mInflater.inflate(R.layout.article_more_content, null);
+        moreContentView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        
+        final PopupWindow popupWindow = new PopupWindow(this);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.gray_comments_information)));
+        popupWindow.setContentView(moreContentView);
+        popupWindow.showAsDropDown(mActionbarMore);
+        popupWindow.setTouchable(true);
+        popupWindow.setFocusable(true);
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setOnDismissListener(new OnDismissListener() {
+            public void onDismiss() {
+                mActionbarMore.setSelected(false);
+            }
+        });
+
+        Button favoriteButton = (Button) moreContentView.findViewById(R.id.article_more_content_favorite);
+        favoriteButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(MainActivity.getInstance().addFavoritePost(position))   
+                	Toast.makeText(ArticleReaderActivity.this, "Add to favorite",
+						Toast.LENGTH_SHORT).show();
+                else
+                	Toast.makeText(ArticleReaderActivity.this, "Already exist in favorite",
+    						Toast.LENGTH_SHORT).show();
+                popupWindow.dismiss();
+            }
+        });
+
+        Button shareButton = (Button) moreContentView.findViewById(R.id.article_more_content_share);
+        shareButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+            	Intent i = new Intent(Intent.ACTION_SEND);
+                i.setType("text/plain");
+                i.putExtra(Intent.EXTRA_SUBJECT, mPost.getTitle());
+                i.putExtra(Intent.EXTRA_TEXT, mPost.getURL());
+                startActivity(Intent.createChooser(i, getString(R.string.share_article_url)));
+                popupWindow.dismiss();
+            }
+        });
+        
+        Button translateButton = (Button) moreContentView.findViewById(R.id.article_more_content_translate);
+        translateButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+            	translateFlag = !translateFlag;
+            	mWebView.loadUrl(getArticleViewURL(mPost, mHtmlProvider, ArticleReaderActivity.this));
+                popupWindow.dismiss();
+            }
+        });
+
+        popupWindow.update(moreContentView.getMeasuredWidth(), moreContentView.getMeasuredHeight());
     }
 
     @SuppressWarnings("deprecation")

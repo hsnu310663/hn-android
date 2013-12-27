@@ -4,12 +4,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.R.bool;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.DataSetObserver;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
@@ -63,7 +68,8 @@ import com.navdrawer.SimpleSideDrawer;
 @EActivity(R.layout.main)
 
 public class MainActivity extends BaseListActivity implements ITaskFinishedHandler<HNFeed> {
-
+	private SharedPreferences fFeed=null;
+	private JSONArray postJsonArray=null;
 	float drag_Sx = 0, drag_Sy = 0;
 	float drag_Ex = 0, drag_Ey = 0;
 	boolean startSlide = false;
@@ -113,6 +119,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     
     boolean turn =false;
     HNFeed save;
+    public static HNFeed favoritePosts;
     //---------------------------------------
     
 
@@ -125,7 +132,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     int mFontSizeTitle;
     int mFontSizeDetails;
     String compare_text;
-
+    public static MainActivity instance;
     private static final int TASKCODE_LOAD_FEED = 10;
     private static final int TASKCODE_LOAD_MORE_POSTS = 20;
     private static final int TASKCODE_VOTE = 100;
@@ -141,8 +148,12 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 
     @AfterViews
     public void init() {
+    	instance=this;
+    	initFavoritePosts();
+
     	save = new HNFeed(new ArrayList<HNPost>(), null, "");
         mFeed = new HNFeed(new ArrayList<HNPost>(), null, "");
+        
         mPostsListAdapter = new PostsAdapter();
         mUpvotedPosts = new HashSet<HNPost>();
         mActionbarRefresh.setImageDrawable(getResources().getDrawable(R.drawable.refresh));
@@ -191,6 +202,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
+				System.out.println(mFeed.toString());
 				Toast.makeText(MainActivity.this, "orderByComment",
 						Toast.LENGTH_SHORT).show();
 			}
@@ -200,8 +212,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				Toast.makeText(MainActivity.this, "mSettings",
-						Toast.LENGTH_SHORT).show();
+				startActivity(new Intent(MainActivity.this, SettingsActivity.class));
 			}
 		});
 		mAbout.setOnClickListener(new OnClickListener() {
@@ -209,8 +220,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				Toast.makeText(MainActivity.this, "mAbout",
-						Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(MainActivity.this, AboutActivity_.class));
 			}
 		});
 		mFavorite.setOnClickListener(new OnClickListener() {
@@ -218,14 +228,15 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				Toast.makeText(MainActivity.this, "mFavorite",
-						Toast.LENGTH_SHORT).show();
+				 showFavoritePosts();
+				 mNav.toggleLeftDrawer();
 			}
 		});
 		  
 		  
           loadIntermediateFeedFromStore();
           startFeedLoading();
+          
     }
 
     @Click(R.id.main_search)
@@ -363,7 +374,10 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         }
 
     }
-
+    public static MainActivity getInstance()
+    {
+    	return instance;
+    }
     private void showFeed(HNFeed feed) {
         mFeed = feed;
         mPostsListAdapter.notifyDataSetChanged();
@@ -550,60 +564,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                             startActivity(i);
                         }
                     });
-/*				holder.textContainer.setOnTouchListener(new OnTouchListener() {
 
-					@Override
-					public boolean onTouch(View v, MotionEvent event) {
-						// TODO Auto-generated method stub
-
-						if (event.getAction() == MotionEvent.ACTION_UP) {
-							System.out.println("up");
-							if (!startSlide && !longClick) {
-								if (Settings
-										.getHtmlViewer(MainActivity.this)
-										.equals(getString(R.string.pref_htmlviewer_browser)))
-									openURLInBrowser(
-											getArticleViewURL(getItem(position)),
-											MainActivity.this);
-								else
-									openPostInApp(position,getItem(position), null, MainActivity.this);
-
-							} else {
-								drag_Ex = event.getX();
-								drag_Ey = event.getY();
-								if (drag_Ex - drag_Sx >= 100) {
-									mNav.toggleLeftDrawer();
-								}
-							}
-							if (longClick)
-								longClick = false;
-							return false;
-						}
-						if (event.getAction() == MotionEvent.ACTION_MOVE) {
-							System.out.println("move");
-							if (!startSlide) {
-								if (Math.sqrt(Math.pow(event.getX() - drag_Sx,
-										2)
-										+ Math.pow(event.getY() - drag_Sy, 2)) >= 10.0) {
-									drag_Sx = event.getX();
-									drag_Sy = event.getY();
-									startSlide = true;
-								}
-							}
-							return false;
-
-						}
-						if (event.getAction() == MotionEvent.ACTION_DOWN) {
-							System.out.println("down");
-							startSlide = false;
-							drag_Sx = event.getX();
-							drag_Sy = event.getY();
-							return false;
-						}
-
-						return false;
-					}
-				});*/
                 holder.textContainer.setOnClickListener(new OnClickListener() {
                     public void onClick(View v) {
                         if (Settings.getHtmlViewer(MainActivity.this).equals(
@@ -616,11 +577,13 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 				holder.textContainer
 						.setOnLongClickListener(new OnLongClickListener() {
 							public boolean onLongClick(View v) {
+								
 								System.out.println("onLongClick");
 								if(!startSlide){
+									
 									longClick = true;
 									final HNPost post = getItem(position);
-
+									addFavoritePost(position);
 									AlertDialog.Builder builder = new AlertDialog.Builder(
 											MainActivity.this);
 		                            LongPressMenuListAdapter adapter = new LongPressMenuListAdapter(post,position);
@@ -868,4 +831,69 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 		return false;
 
 	}
+	private void initFavoritePosts() {
+		fFeed=getSharedPreferences("DATA",0);
+		String storeJSON=fFeed.getString("postData", "");
+		favoritePosts=new HNFeed(new ArrayList<HNPost>(), null, "");
+		if(storeJSON.length()>0){
+	    	try {
+				postJsonArray = new JSONArray(storeJSON);
+		    	for(int n=0;n<postJsonArray.length();n++){
+		    		JSONObject temp=postJsonArray.getJSONObject(n);
+		    		favoritePosts.addPost(new HNPost(temp.getString("url"),temp.getString("title"),temp.getString("urlDomain"),temp.getString("author"),temp.getString("postID"),temp.getInt("commentsCount"),temp.getInt("points"),null));
+		    	}
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		
+	}
+	public boolean addFavoritePost(int nPost)  {
+    	fFeed=getSharedPreferences("DATA",0);
+    	if(postJsonArray==null){
+    		postJsonArray = new JSONArray();
+    	}
+    	HNPost temp=mFeed.getPosts().get(nPost);
+    	if(!isPostinFavorite(temp.getURL())){
+	    	//New hnPOST
+	        JSONObject jsonObject = new JSONObject();
+	        try {
+				jsonObject.put("url", temp.getURL());
+		        jsonObject.put("title", temp.getTitle());
+		        jsonObject.put("urlDomain", temp.getURLDomain());
+		        jsonObject.put("author", temp.getAuthor());
+		        jsonObject.put("postID", temp.getPostID());
+		        jsonObject.put("commentsCount", temp.getCommentsCount()); 
+		        jsonObject.put("points", temp.getPoints());
+		        jsonObject.put("upvoteURL", null);         
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}               
+	        //put in jsonArray
+	        postJsonArray.put(jsonObject);
+	        fFeed.edit().putString("postData", postJsonArray.toString()).commit();
+	        
+	    	favoritePosts.addPost(temp); 
+	    	return true;
+    	}
+    	return false;
+    	
+    }
+    public  boolean isPostinFavorite(String postUrl)  {
+    	for(int p=0;p<favoritePosts.getPosts().size();p++){
+    		if(favoritePosts.getPosts().get(p).getURL().equals(postUrl))return true;
+    	}
+    	return false;
+    }
+    private void showFavoritePosts() {
+        showFeed(favoritePosts);
+    }
+    
+    
+
+
+
 }
