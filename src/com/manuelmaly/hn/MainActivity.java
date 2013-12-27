@@ -850,7 +850,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 		
 		
 	}
-    private void addFavoritePost(int nPost)  {
+	public boolean addFavoritePost(int nPost)  {
     	fFeed=getSharedPreferences("DATA",0);
     	if(postJsonArray==null){
     		postJsonArray = new JSONArray();
@@ -876,11 +876,13 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 	        postJsonArray.put(jsonObject);
 	        fFeed.edit().putString("postData", postJsonArray.toString()).commit();
 	        
-	    	favoritePosts.addPost(temp);  
+	    	favoritePosts.addPost(temp); 
+	    	return true;
     	}
+    	return false;
     	
     }
-    public static boolean isPostinFavorite(String postUrl)  {
+    public  boolean isPostinFavorite(String postUrl)  {
     	for(int p=0;p<favoritePosts.getPosts().size();p++){
     		if(favoritePosts.getPosts().get(p).getURL().equals(postUrl))return true;
     	}
