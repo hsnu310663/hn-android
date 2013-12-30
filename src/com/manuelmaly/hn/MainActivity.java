@@ -188,9 +188,11 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 				// TODO Auto-generated method stub
 				Toast.makeText(MainActivity.this, "orderByTime",
 						Toast.LENGTH_SHORT).show();
-				HNSearch.mode mode = HNSearch.mode.Time;
-				search.set_mode(mode);
-				new Thread(Search).start();
+				if(search.get_keyword() !=""){
+					HNSearch.mode mode = HNSearch.mode.Time;
+					search.set_mode(mode);
+					new Thread(Search).start();
+				}
 			}
 		});
 
@@ -201,9 +203,11 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 				// TODO Auto-generated method stub
 				Toast.makeText(MainActivity.this, "orderByReader",
 						Toast.LENGTH_SHORT).show();
-				HNSearch.mode mode = HNSearch.mode.Reader;
-				search.set_mode(mode);
-				new Thread(Search).start();	
+				if(search.get_keyword() !=""){
+					HNSearch.mode mode = HNSearch.mode.Reader;
+					search.set_mode(mode);
+					new Thread(Search).start();	
+				}
 			}
 		});
 		
@@ -215,10 +219,11 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 				System.out.println(mFeed.toString());
 				Toast.makeText(MainActivity.this, "orderByComment",
 						Toast.LENGTH_SHORT).show();
-				HNSearch.mode mode = HNSearch.mode.Comment;
-				search.set_mode(mode);
-				new Thread(Search).start();
-				
+				if(search.get_keyword() !=""){
+					HNSearch.mode mode = HNSearch.mode.Comment;
+					search.set_mode(mode);
+					new Thread(Search).start();
+				}
 			}
 		});
 		mSettings.setOnClickListener(new OnClickListener() {
