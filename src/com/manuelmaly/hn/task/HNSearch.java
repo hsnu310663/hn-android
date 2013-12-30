@@ -20,10 +20,14 @@ public class HNSearch {
 	HNFeed Feed;
 	String REQUEST_URL = "http://api.thriftdb.com/api.hnsearch.com/items/_search?";
 	int limit = 60;
-	int sort_mode = 0;
+	mode sort_mode = mode.Time;
 	String Rank[][];
 	int rank_number = 12;
 
+	public enum mode {
+        Time, Reader, Comment
+    }
+	
 	public HNSearch() {
 		init();
 		Feed = new HNFeed(new ArrayList<HNPost>(), null, "");
@@ -59,8 +63,14 @@ public class HNSearch {
 
 	public String get_URL() {
 		switch (sort_mode) {
-		case 0:
+		case Time:
 			Rank[10][1] =  "create_ts%20desc";
+			break;
+		case Reader:
+			Rank[10][1] =  "points%20desc";
+			break;
+		case Comment:
+			Rank[10][1] =  "num_comments%20desc";
 			break;
 		}
 		String URL = REQUEST_URL;
@@ -69,8 +79,8 @@ public class HNSearch {
 		return URL;
 	}
 
-	public void set_mode(int mode) {
-		sort_mode = mode;
+	public void set_mode(mode the_mode) {
+		sort_mode = the_mode;
 	}
 
 	public static String readAll(Reader rd) throws IOException {

@@ -188,6 +188,9 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 				// TODO Auto-generated method stub
 				Toast.makeText(MainActivity.this, "orderByTime",
 						Toast.LENGTH_SHORT).show();
+				HNSearch.mode mode = HNSearch.mode.Time;
+				search.set_mode(mode);
+				new Thread(Search).start();
 			}
 		});
 
@@ -198,6 +201,9 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 				// TODO Auto-generated method stub
 				Toast.makeText(MainActivity.this, "orderByReader",
 						Toast.LENGTH_SHORT).show();
+				HNSearch.mode mode = HNSearch.mode.Reader;
+				search.set_mode(mode);
+				new Thread(Search).start();	
 			}
 		});
 		
@@ -209,6 +215,10 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 				System.out.println(mFeed.toString());
 				Toast.makeText(MainActivity.this, "orderByComment",
 						Toast.LENGTH_SHORT).show();
+				HNSearch.mode mode = HNSearch.mode.Comment;
+				search.set_mode(mode);
+				new Thread(Search).start();
+				
 			}
 		});
 		mSettings.setOnClickListener(new OnClickListener() {
@@ -250,6 +260,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     	if( main_search_text.getText().toString() == ""){}
     	else if(  search.get_keyword() != main_search_text.getText().toString())
     	{
+    		search.set_keyword(main_search_text.getText().toString());
     		new Thread(Search).start();		
     	}
     	else{}
@@ -275,7 +286,6 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     
     private Runnable Search = new Runnable(){
      public void run(){
- 	   search.set_keyword(main_search_text.getText().toString());
   	   search.Search() ;  	   
        SearchThreadHandler.sendEmptyMessage(0);
      }
