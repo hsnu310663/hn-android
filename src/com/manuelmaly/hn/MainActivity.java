@@ -4,6 +4,7 @@ package com.manuelmaly.hn;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,6 +61,7 @@ import com.googlecode.androidannotations.annotations.ViewById;
 import com.manuelmaly.hn.model.HNFeed;
 import com.manuelmaly.hn.model.HNPost;
 import com.manuelmaly.hn.parser.BaseHTMLParser;
+import com.manuelmaly.hn.parser.HNFeedParser;
 import com.manuelmaly.hn.server.HNCredentials;
 import com.manuelmaly.hn.task.HNFeedTaskLoadMore;
 import com.manuelmaly.hn.task.HNFeedTaskMainFeed;
@@ -136,6 +138,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     HashSet<HNPost> mUpvotedPosts;
 
     String mCurrentFontSize = null;
+    String mCurrentHTMLContent = null;
     int mFontSizeTitle;
     int mFontSizeDetails;
     public static MainActivity instance;
@@ -274,12 +277,41 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     
     
     private Runnable Search = new Runnable(){
-     public void run(){
- 	   search.set_keyword(main_search_text.getText().toString());
-  	   search.Search() ;  	   
-       SearchThreadHandler.sendEmptyMessage(0);
-     }
+    	public void run(){
+    		search.set_keyword(main_search_text.getText().toString());
+    		search.Search() ;  	   
+    		SearchThreadHandler.sendEmptyMessage(0);
+    	}
     };
+    
+    private Runnable getURLContent_Thread = new Runnable(){
+    	
+        public void run(){
+        
+        	List<HNPost> mPosts = mFeed.getPosts();
+        	
+        	HNFeedParser parser = new HNFeedParser();
+     
+        	for(int i=0; i<mPosts.size(); i++){
+        		HNPost post = mPosts.get(i);
+        		post.setContent(parser.getURLContent(post.getURL()));
+        		getURLContent_ThreadHandler.sendEmptyMessage(0);
+        	}               	
+        }
+     };
+     
+     private Handler getURLContent_ThreadHandler = new Handler() {
+    	 
+         public void handleMessage(Message msg) {
+         	switch(msg.what){
+         		case 0:
+         			showFeed(mFeed);
+         			break;
+         		default:
+         			break;
+         	}
+         }
+     };
  
     
     @Override
@@ -299,9 +331,26 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         if (refreshFontSizes())
         	mPostsListAdapter.notifyDataSetChanged();
         
+        if(refreshHTMLContent()){       	
+        	
+        	if(mCurrentHTMLContent.equals("display")){
+        		
+        		new Thread(getURLContent_Thread).start();      		
+        	}
+        	else{
+        		List<HNPost> mPosts = mFeed.getPosts();
+        		for(int i=0; i<mPosts.size(); i++){
+        			
+        			mPosts.get(i).setContent("");
+        		}       		
+        		showFeed(mFeed);
+        	}
+        	
+        }
         // restore vertical scrolling position if applicable
         if (mListState != null)
             mPostsList.onRestoreInstanceState(mListState);
+        
         mListState = null;
     }
     
@@ -443,6 +492,27 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         mActionbarRefreshProgress.setVisibility(View.VISIBLE);
         mActionbarRefresh.setVisibility(View.GONE);
     }
+    
+    private boolean refreshHTMLContent(){
+    	
+    	final String htmlContent = Settings.getHtmlContent(this);
+    	if((mCurrentHTMLContent == null) || !mCurrentHTMLContent.equals(htmlContent)){
+    		mCurrentHTMLContent = htmlContent;
+    		if(htmlContent.equals(getString(R.string.pref_htmlcontent_display))){
+    			
+    			mCurrentHTMLContent = "display";
+    		}else{
+    			
+    			mCurrentHTMLContent = "dismiss";
+    		} 
+    		
+    		return true;
+    	}  	
+    	else{
+    		
+    		return false;
+    	}
+    }
 
     private boolean refreshFontSizes() {
         final String fontSize = Settings.getFontSize(this);
@@ -552,6 +622,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                         convertView = (LinearLayout) mInflater.inflate(R.layout.main_list_item, null);
                         PostViewHolder holder = new PostViewHolder();
                         holder.titleView = (TextView) convertView.findViewById(R.id.main_list_item_title);
+                        holder.contentView = (TextView) convertView.findViewById(R.id.main_list_item_content);
                         holder.urlView = (TextView) convertView.findViewById(R.id.main_list_item_url);
                         holder.textContainer = (LinearLayout) convertView
                             .findViewById(R.id.main_list_item_textcontainer);
@@ -566,6 +637,8 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                     PostViewHolder holder = (PostViewHolder) convertView.getTag();
                     holder.titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeTitle);
                     holder.titleView.setText(item.getTitle());
+                    holder.contentView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeDetails);
+                    holder.contentView.setText(item.getContent());
                     holder.urlView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeDetails);
                     holder.urlView.setText(item.getURLDomain());
                     holder.pointsView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeDetails);
@@ -574,7 +647,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                     else
                         holder.pointsView.setText("-");
 
-                    holder.commentsButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeTitle);
+                    holder.commentsButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeTitle);                 
                     if (item.getCommentsCount() != BaseHTMLParser.UNDEFINED) {
                         holder.commentsButton.setVisibility(View.VISIBLE);
                         holder.commentsButton.setText(item.getCommentsCount() + "");
@@ -642,6 +715,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                                 TASKCODE_LOAD_MORE_POSTS);
                         }
                     });
+
                     break;
                 default:
                     break;
@@ -672,7 +746,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                 mItems.add(getString(R.string.upvote));
             else
                 mItems.add(getString(R.string.already_upvoted));
-            mItems.addAll(Arrays.asList(
+            	mItems.addAll(Arrays.asList(
                 getString(R.string.pref_htmlprovider_original_url),
                 getString(R.string.pref_htmlprovider_viewtext),
                 getString(R.string.pref_htmlprovider_google),
@@ -802,6 +876,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         TextView urlView;
         TextView pointsView;
         TextView commentsCountView;
+        TextView contentView;
         LinearLayout textContainer;
         Button commentsButton;
     }

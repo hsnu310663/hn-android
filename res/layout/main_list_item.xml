@@ -26,6 +26,16 @@
             android:textColor="#262321"
             android:textSize="18sp"
             android:textStyle="bold" />
+        
+         <TextView
+            android:id="@+id/main_list_item_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="15dp"
+            android:text="What u want ? Haha"
+            android:textColor="#787070"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="wrap_content"

@@ -1,14 +1,18 @@
 package com.manuelmaly.hn.parser;
 
+import java.io.IOException;
 import java.net.URI;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 import org.w3c.dom.Node;
+
+import android.util.Log;
 
 public abstract class BaseHTMLParser<T> {
     
@@ -72,6 +76,44 @@ public abstract class BaseHTMLParser<T> {
             return value.substring(prefixWordIdx + prefix.length());
         }
         return null;
+    }
+       
+    public String getURLContent(String url){
+    	
+    	Document doc ;
+    	String content = "";
+    	
+		try {
+			doc = Jsoup.connect(url).get();
+			String allContent[] = doc.text().split(" ");
+			int count=0;
+			
+			if(allContent.length<15){
+				
+				while(count<allContent.length){
+					
+					content = content + " " + allContent[count];
+					count++;
+				}
+				
+			}
+			else{
+				while(count<15){
+					
+					content = content + " " + allContent[count];
+					count++;
+				}
+			}
+			
+			content = content + "...";
+		
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+      	
+		Log.i("content", content);
+    	return content;
     }
 
 }

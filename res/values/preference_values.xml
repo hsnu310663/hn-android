@@ -36,5 +36,16 @@
         <item>@string/pref_htmlviewer_app</item>
         <item>@string/pref_htmlviewer_browser</item>
     </string-array>
+    
+    <string name="pref_title_htmlcontent">View HTML Content within &#8230;</string>
+    <string name="pref_default_htmlcontent">Dismiss content of HTML</string>
+    <string name="pref_htmlcontent_display">Display content of HTML</string>
+    <string name="pref_htmlcontent_dismiss">Dismiss content of HTML</string>
+    
+    <string-array name="pref_array_htmlcontent">
+        <item>@string/pref_htmlcontent_display</item>
+        <item>@string/pref_htmlcontent_dismiss</item>
+    </string-array>
+    
 
 </resources>

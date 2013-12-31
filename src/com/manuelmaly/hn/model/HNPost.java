@@ -13,6 +13,8 @@ public class HNPost implements Serializable {
     private String mURLDomain;
     private String mPostID; // as found in link to comments
     private String mUpvoteURL;
+    private String mContents;
+    
     
     public HNPost(String url, String title, String urlDomain, String author, String postID, int commentsCount, int points, String upvoteURL) {
         super();
@@ -54,11 +56,22 @@ public class HNPost implements Serializable {
         return mURLDomain;
     }
     
+    public String getContent(){
+    	
+    	return mContents;
+    }
+    
+    public void setContent(String content) {
+    	
+    	this.mContents = content;
+    }
+    
     public String getUpvoteURL(String currentUserName) {
         if (mUpvoteURL == null || !mUpvoteURL.contains(currentUserName))
             return null;
         return mUpvoteURL;
     }
+    
 
     @Override
     public int hashCode() {
@@ -95,8 +108,5 @@ public class HNPost implements Serializable {
         } else if (!mURL.equals(other.mURL))
             return false;
         return true;
-    }
-    
-    
-    
+    }    
 }
