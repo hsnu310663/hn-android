@@ -13,7 +13,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import com.manuelmaly.hn.model.HNFeed;
 import com.manuelmaly.hn.model.HNPost;
-import com.manuelmaly.hn.parser.BaseHTMLParser;
 
 public class HNSearch {
 
@@ -109,7 +108,7 @@ public class HNSearch {
 		String url, title, mURLDomain, username, id, num_comments, points, mUpvoteURL;
 		try {
 			url = item.getString("url");
-			mURLDomain = BaseHTMLParser.getDomainName(url);
+			mURLDomain = item.getString("domain");
 			title = item.getString("title");
 			username = item.getString("username");
 			id = item.getString("id");
