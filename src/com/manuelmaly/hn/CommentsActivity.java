@@ -16,7 +16,6 @@ import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,7 +38,7 @@ import com.googlecode.androidannotations.annotations.AfterViews;
 import com.googlecode.androidannotations.annotations.EActivity;
 import com.googlecode.androidannotations.annotations.SystemService;
 import com.googlecode.androidannotations.annotations.ViewById;
-import com.manuelmaly.hn.login.*;
+import com.manuelmaly.hn.login.LoginActivity;
 import com.manuelmaly.hn.model.HNComment;
 import com.manuelmaly.hn.model.HNPost;
 import com.manuelmaly.hn.model.HNPostComments;
@@ -91,12 +90,10 @@ public class CommentsActivity extends BaseListActivity implements ITaskFinishedH
 
     LinearLayout mCommentHeader;
     TextView mCommentHeaderText;
-    TextView mEmptyView;
 
     HNPost mPost;
     HNPostComments mComments;
     CommentsAdapter mCommentsListAdapter;
-    boolean mHaveLoadedPosts = false;
 
     String mCurrentFontSize = null;
     int mFontSizeText;
@@ -127,8 +124,7 @@ public class CommentsActivity extends BaseListActivity implements ITaskFinishedH
         mVotedComments = new HashSet<HNComment>();
         mCommentsListAdapter = new CommentsAdapter();
         mCommentHeaderText.setVisibility(View.GONE);
-        mEmptyView = getEmptyTextView(mRootView);
-        mCommentsList.setEmptyView(mEmptyView);
+        mCommentsList.setEmptyView(getLoadingPanel(mRootView));
         mCommentsList.addHeaderView(mCommentHeader, null, false);
         mCommentsList.setAdapter(mCommentsListAdapter);
 
@@ -185,7 +181,7 @@ public class CommentsActivity extends BaseListActivity implements ITaskFinishedH
                     startFeedLoading();
             }
         });
-
+        
         mActionbarRefreshProgress.setVisibility(View.GONE);
 
         loadIntermediateCommentsFromStore();
@@ -199,7 +195,7 @@ public class CommentsActivity extends BaseListActivity implements ITaskFinishedH
         // refresh if font size changed
         if (refreshFontSizes())
         	mCommentsListAdapter.notifyDataSetChanged();
-
+        
         // restore vertical scrolling position if applicable
         if (mListState != null)
             mCommentsList.onRestoreInstanceState(mListState);
@@ -210,42 +206,39 @@ public class CommentsActivity extends BaseListActivity implements ITaskFinishedH
     public void onTaskFinished(int taskCode, TaskResultCode code, HNPostComments result, Object tag) {
         if (code.equals(TaskResultCode.Success) && mCommentsListAdapter != null)
             showComments(result);
-        else if (!code.equals(TaskResultCode.Success))
-            Toast.makeText(this, getString(R.string.
-                    error_unable_to_retrieve_comments), Toast.LENGTH_SHORT).show();
-        updateEmptyView();
         updateStatusIndicatorOnLoadingFinished(code);
     }
 
     private void showComments(HNPostComments comments) {
         if (comments.getHeaderHtml() != null && mCommentHeaderText.getVisibility() != View.VISIBLE) {
             mCommentHeaderText.setVisibility(View.VISIBLE);
-            // We trim it here to get rid of pesky newlines that come from
+            // We trip it here to get rid of pesky newlines that come from
             // closing <p> tags
             mCommentHeaderText.setText(Html.fromHtml(comments.getHeaderHtml()).toString().trim());
-
-            // Linkify.ALL does some highlighting where we don't want it
-            // (i.e if you just put certain tlds in) so we use this custom regex.
-            Linkify.addLinks(mCommentHeaderText, Linkify.WEB_URLS); //
+            Linkify.addLinks(mCommentHeaderText,
+                    Pattern.compile("(https?:\\/\\/)([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?"), "");
         }
 
         mComments = comments;
 
+        // We don't want the loading view to show if there are actually
+        // no comments to display
+        if (mComments.getComments().size() == 0)
+            mCommentsList.setEmptyView(null);
         mCommentsListAdapter.notifyDataSetChanged();
     }
 
     private void loadIntermediateCommentsFromStore() {
         new GetLastHNPostCommentsTask().execute(mPost.getPostID());
     }
-
+    
     class GetLastHNPostCommentsTask extends FileUtil.GetLastHNPostCommentsTask {
         protected void onPostExecute(HNPostComments result) {
-            if (result != null && result.getUserAcquiredFor().equals(Settings
+            if (result == null) {
+                // TODO: display "Loading..." instead
+            } else if (result.getUserAcquiredFor().equals(Settings
                     .getUserName(CommentsActivity.this)))
                 showComments(result);
-            else {
-                updateEmptyView();
-            }
         }
     }
 
@@ -260,7 +253,6 @@ public class CommentsActivity extends BaseListActivity implements ITaskFinishedH
     }
 
     private void startFeedLoading() {
-        mHaveLoadedPosts = false;
         HNPostCommentsTask.startOrReattach(this, this, mPost.getPostID(), 0);
         updateStatusIndicatorOnLoadingStarted();
     }
@@ -320,13 +312,6 @@ public class CommentsActivity extends BaseListActivity implements ITaskFinishedH
             v.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, 1));
             mCommentHeader.addView(v);
         }
-    }
-
-    private void updateEmptyView() {
-        if (mHaveLoadedPosts)
-            mEmptyView.setText(getString(R.string.no_comments));
-
-        mHaveLoadedPosts = true;
     }
 
     private class LongPressMenuListAdapter implements ListAdapter, DialogInterface.OnClickListener {
@@ -438,7 +423,7 @@ public class CommentsActivity extends BaseListActivity implements ITaskFinishedH
             if (clickedText.equals(getApplicationContext().getString(R.string.upvote))) {
                 if (!mIsLoggedIn) {
                     setCommentToUpvote(mComment);
-                    startActivityForResult(new Intent(getApplicationContext(), LoginActivity_.class),
+                    startActivityForResult(new Intent(getApplicationContext(), LoginActivity.class),
                             ACTIVITY_LOGIN);
                 }
                 else

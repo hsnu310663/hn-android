@@ -36,5 +36,25 @@
         <item>@string/pref_htmlviewer_app</item>
         <item>@string/pref_htmlviewer_browser</item>
     </string-array>
+    
+     <!--  Ramesh kumar coding part for change background color using radio button   -->
+        
+    <string name="pref_title_background_color">Select Background Color</string>
+    <string name="pref_default_background_color">RED</string>
+    <string name="pref_background_color_Red">RED</string>
+    <string name="pref_background_color_Blue">BLUE</string>
+    <string name="pref_background_color_green">GREEN</string>
+    
+    <string-array name="pref_array_background_color">                     
+        <item>@string/pref_background_color_Red</item>
+        <item>@string/pref_background_color_Blue</item>
+        <item>@string/pref_background_color_green</item>
+    </string-array>
+
+  
+    
 
 </resources>
+
+
+

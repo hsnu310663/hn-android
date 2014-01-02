@@ -6,7 +6,8 @@ import android.preference.PreferenceManager;
 
 public class Settings {
     
-    public static final String PREF_FONTSIZE = "pref_fontsize";
+    public static final String PREF_FONTSIZE = "pref_fontsize";     
+    public static final String pref_COLOR = "pref_background_color";    // Ramesh kumar coding part for change background color using radio button
     public static final String PREF_HTMLPROVIDER = "pref_htmlprovider";
     public static final String PREF_HTMLVIEWER = "pref_htmlviewer";
     public static final String PREF_USER = "pref_user";
@@ -26,6 +27,15 @@ public class Settings {
     public static String getHtmlViewer(Context c) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(c);
         return sharedPref.getString(PREF_HTMLVIEWER, c.getString(R.string.pref_default_htmlviewer));
+    }
+    
+   
+  // Ramesh kumar coding part for change background color using radio button
+    
+    public static String getColor(Context c) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(c);
+        return sharedPref.getString(pref_COLOR, c.getString(R.string.pref_default_background_color));
+        
     }
 
     public static boolean isUserLoggedIn(Context c) {

@@ -11,21 +11,17 @@
         android:background="@drawable/actionbar_bg_bright"
         android:gravity="center" >
 
-        <LinearLayout
+        <ImageView
+            android:id="@+id/actionbar_back"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent" >
-
-            <ImageView
-                android:id="@+id/actionbar_back"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:contentDescription="@string/back_to_main"
-                android:paddingBottom="8dp"
-                android:paddingLeft="8dp"
-                android:paddingRight="12dp"
-                android:paddingTop="8dp"
-                android:src="@drawable/back" />
-        </LinearLayout>
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:contentDescription="@string/back_to_main"
+            android:paddingBottom="8dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="12dp"
+            android:paddingTop="8dp"
+            android:src="@drawable/back" />
 
         <Button
             android:id="@+id/actionbar_title_button"
@@ -54,7 +50,7 @@
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
             android:paddingTop="8dp"
-            android:src="@drawable/more" />
+            android:src="@drawable/share" />
 
         <LinearLayout
             android:id="@+id/actionbar_refresh_container"
@@ -74,7 +70,6 @@
                 android:id="@+id/actionbar_refresh_progress"
                 style="@style/MenubarRefresh" />
         </LinearLayout>
-
     </FrameLayout>
 
     <WebView
