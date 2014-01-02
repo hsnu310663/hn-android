@@ -13,17 +13,20 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import com.manuelmaly.hn.model.HNFeed;
 import com.manuelmaly.hn.model.HNPost;
-import com.manuelmaly.hn.parser.BaseHTMLParser;
 
 public class HNSearch {
 
 	HNFeed Feed;
 	String REQUEST_URL = "http://api.thriftdb.com/api.hnsearch.com/items/_search?";
 	int limit = 60;
-	int sort_mode = 0;
+	mode sort_mode = mode.Time;
 	String Rank[][];
 	int rank_number = 12;
 
+	public enum mode {
+        Time, Reader, Comment
+    }
+	
 	public HNSearch() {
 		init();
 		Feed = new HNFeed(new ArrayList<HNPost>(), null, "");
@@ -59,8 +62,14 @@ public class HNSearch {
 
 	public String get_URL() {
 		switch (sort_mode) {
-		case 0:
+		case Time:
 			Rank[10][1] =  "create_ts%20desc";
+			break;
+		case Reader:
+			Rank[10][1] =  "points%20desc";
+			break;
+		case Comment:
+			Rank[10][1] =  "num_comments%20desc";
 			break;
 		}
 		String URL = REQUEST_URL;
@@ -69,8 +78,8 @@ public class HNSearch {
 		return URL;
 	}
 
-	public void set_mode(int mode) {
-		sort_mode = mode;
+	public void set_mode(mode the_mode) {
+		sort_mode = the_mode;
 	}
 
 	public static String readAll(Reader rd) throws IOException {
@@ -99,7 +108,7 @@ public class HNSearch {
 		String url, title, mURLDomain, username, id, num_comments, points, mUpvoteURL;
 		try {
 			url = item.getString("url");
-			mURLDomain = BaseHTMLParser.getDomainName(url);
+			mURLDomain = item.getString("domain");
 			title = item.getString("title");
 			username = item.getString("username");
 			id = item.getString("id");
