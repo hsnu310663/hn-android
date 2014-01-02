@@ -32,6 +32,10 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
     public enum HTMLVIEWER {
         HTMLVIEWER_WITHINAPP, HTMLVIEWER_BROWSER
     }
+    
+    public enum HTMLCONTENT {
+    	HTMLCONTENT_DISPLAY, HTMLVIEWER_DISAPPEAR
+    }
 
     private static final int REQUEST_LOGIN = 100;
     private Preference mUserPref;
@@ -52,6 +56,9 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
 
         Preference htmlViewerPref = findPreference(Settings.PREF_HTMLVIEWER);
         htmlViewerPref.setSummary(sharedPref.getString(Settings.PREF_HTMLVIEWER, "Undefined"));
+        
+        Preference htmlContentPref = findPreference(Settings.PREF_CONTENT);
+        htmlContentPref.setSummary(sharedPref.getString(Settings.PREF_CONTENT, "Undefined"));
 
         mUserPref= (UserPreference) findPreference(Settings.PREF_USER);
         mUserPref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
@@ -79,7 +86,7 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
             @Override
             public void run() {
                 if (key.equals(Settings.PREF_FONTSIZE) || key.equals(Settings.PREF_HTMLPROVIDER)
-                    || key.equals(Settings.PREF_HTMLVIEWER))
+                    || key.equals(Settings.PREF_HTMLVIEWER)||key.equals(Settings.PREF_CONTENT))
                     findPreference(key).setSummary(sharedPreferences.getString(key, "Undefined"));
                 else if (key.equals(Settings.PREF_USER)) {
                     HNCredentials.invalidate();

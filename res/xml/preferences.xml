@@ -23,6 +23,14 @@
         android:entryValues="@array/pref_array_htmlviewer"
         android:defaultValue="@string/pref_default_htmlviewer" />
     
+    <ListPreference
+        android:key="pref_htmlcontent"
+        android:title="@string/pref_title_htmlcontent"
+        android:dialogTitle="@string/pref_title_htmlcontent"
+        android:entries="@array/pref_array_htmlcontent"
+        android:entryValues="@array/pref_array_htmlcontent"
+        android:defaultValue="@string/pref_default_htmlcontent" />
+    
     <com.manuelmaly.hn.UserPreference 
       android:key="pref_user"
       android:layout="@layout/user_settings" 
