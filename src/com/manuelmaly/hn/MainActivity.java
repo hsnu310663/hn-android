@@ -1,24 +1,43 @@
 package com.manuelmaly.hn;
 
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.R.bool;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.DataSetObserver;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
 import android.os.Parcelable;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.DragEvent;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnDragListener;
 import android.view.View.OnLongClickListener;
+import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -32,6 +51,8 @@ import android.widget.PopupWindow.OnDismissListener;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ImageButton;
+
 import com.googlecode.androidannotations.annotations.AfterViews;
 import com.googlecode.androidannotations.annotations.Click;
 import com.googlecode.androidannotations.annotations.EActivity;
@@ -40,16 +61,26 @@ import com.googlecode.androidannotations.annotations.ViewById;
 import com.manuelmaly.hn.model.HNFeed;
 import com.manuelmaly.hn.model.HNPost;
 import com.manuelmaly.hn.parser.BaseHTMLParser;
+import com.manuelmaly.hn.parser.HNFeedParser;
 import com.manuelmaly.hn.server.HNCredentials;
 import com.manuelmaly.hn.task.HNFeedTaskLoadMore;
 import com.manuelmaly.hn.task.HNFeedTaskMainFeed;
+import com.manuelmaly.hn.task.HNSearch;
 import com.manuelmaly.hn.task.HNVoteTask;
 import com.manuelmaly.hn.task.ITaskFinishedHandler;
 import com.manuelmaly.hn.util.FileUtil;
 import com.manuelmaly.hn.util.FontHelper;
+import com.navdrawer.SimpleSideDrawer;
 
 @EActivity(R.layout.main)
+
 public class MainActivity extends BaseListActivity implements ITaskFinishedHandler<HNFeed> {
+	private SharedPreferences fFeed=null;
+	private JSONArray postJsonArray=null;
+	float drag_Sx = 0, drag_Sy = 0;
+	float drag_Ex = 0, drag_Ey = 0;
+	boolean startSlide = false;
+	boolean longClick = false;
 
     @ViewById(R.id.main_list)
     ListView mPostsList;
@@ -75,56 +106,247 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     @SystemService
     LayoutInflater mInflater;
     
+	
+	TextView orderByTime;
+	TextView orderByReader;
+	TextView orderByComment;
+	TextView mSettings;
+	TextView mAbout;
+	TextView mFavorite;
+	
+    //------------- new add -----------------
+    @ViewById(R.id.main_search)
+    Button main_search;
+    
+    @ViewById(R.id.main_search_text)
+    TextView main_search_text;
+    
+    @ViewById(R.id.Magnifier)
+    ImageView Magnifier;
+    
+    boolean turn =false;
+    public static HNFeed favoritePosts;
+    HNSearch search;
+    
+    private HandlerThread mThread;
+    //---------------------------------------
+    
+
     TextView mEmptyListPlaceholder;
     HNFeed mFeed;
     PostsAdapter mPostsListAdapter;
     HashSet<HNPost> mUpvotedPosts;
 
     String mCurrentFontSize = null;
+    String mCurrentHTMLContent = null;
     int mFontSizeTitle;
     int mFontSizeDetails;
     
-  // Ramesh kumar coding part for change background color using radio button
+    // Ramesh kumar coding part for change background color using radio button
     String mCurrentColor = null;
     int mColorDetails;
     
-
+    public static MainActivity instance;
     private static final int TASKCODE_LOAD_FEED = 10;
     private static final int TASKCODE_LOAD_MORE_POSTS = 20;
     private static final int TASKCODE_VOTE = 100;
+    
+    private static final int NEXTPAGE = 0;
+    public static final String ARTICAL_POSITION = "NEXT_POSITION";
 
     private static final String LIST_STATE = "listState";
     private Parcelable mListState = null;
-
-	public int color;
+	
+	// SlideMenu
+	private SimpleSideDrawer mNav;
 
     @AfterViews
     public void init() {
+    	instance=this;
+    	initFavoritePosts();
+
         mFeed = new HNFeed(new ArrayList<HNPost>(), null, "");
+        
         mPostsListAdapter = new PostsAdapter();
         mUpvotedPosts = new HashSet<HNPost>();
         mActionbarRefresh.setImageDrawable(getResources().getDrawable(R.drawable.refresh));
         mActionbarTitle.setTypeface(FontHelper.getComfortaa(this, true));
         
         mActionbarRefreshProgress.setVisibility(View.GONE);
-        mEmptyListPlaceholder = getLoadingPanel(mRootView);
+        mEmptyListPlaceholder = getEmptyTextView(mRootView);
         mPostsList.setEmptyView(mEmptyListPlaceholder);
         mPostsList.setAdapter(mPostsListAdapter);
 
         mEmptyListPlaceholder.setTypeface(FontHelper.getComfortaa(this, true));
-        
-        loadIntermediateFeedFromStore();
-        startFeedLoading();
+		  
+		mNav = new SimpleSideDrawer(this);
+		mNav.setLeftBehindContentView(R.layout.slide_menu_drawer);
+
+		orderByTime = (TextView) findViewById(R.id.orderByTime);
+		orderByReader = (TextView) findViewById(R.id.orderByReader);
+		orderByComment = (TextView) findViewById(R.id.orderByComment);
+		mSettings = (TextView) findViewById(R.id.mSettings);
+		mAbout = (TextView) findViewById(R.id.mAbout);
+		mFavorite = (TextView) findViewById(R.id.mFavorite);
+
+		orderByTime.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				Toast.makeText(MainActivity.this, "orderByTime",
+						Toast.LENGTH_SHORT).show();
+				if(search.get_keyword() !=""){
+					HNSearch.mode mode = HNSearch.mode.Time;
+					search.set_mode(mode);
+					new Thread(Search).start();
+				}
+			}
+		});
+
+		orderByReader.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				Toast.makeText(MainActivity.this, "orderByReader",
+						Toast.LENGTH_SHORT).show();
+				if(search.get_keyword() !=""){
+					HNSearch.mode mode = HNSearch.mode.Reader;
+					search.set_mode(mode);
+					new Thread(Search).start();	
+				}
+			}
+		});
+		
+		orderByComment.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				System.out.println(mFeed.toString());
+				Toast.makeText(MainActivity.this, "orderByComment",
+						Toast.LENGTH_SHORT).show();
+				if(search.get_keyword() !=""){
+					HNSearch.mode mode = HNSearch.mode.Comment;
+					search.set_mode(mode);
+					new Thread(Search).start();
+				}
+			}
+		});
+		mSettings.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+			}
+		});
+		mAbout.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+                startActivity(new Intent(MainActivity.this, AboutActivity_.class));
+			}
+		});
+		mFavorite.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				 showFavoritePosts();
+				 mNav.toggleLeftDrawer();
+			}
+		});
+		  
+		  
+          search = new HNSearch();
+          loadIntermediateFeedFromStore();
+          startFeedLoading();
+          
     }
 
+    @Click(R.id.main_search)
+    void main_search()  {
+    	open_search();
+    	if( main_search_text.getText().toString() == ""){}
+    	else if(  search.get_keyword() != main_search_text.getText().toString())
+    	{
+    		search.set_keyword(main_search_text.getText().toString());
+    		new Thread(Search).start();		
+    	}
+    	else{}
+    	 mActionbarRefresh.setImageResource(R.drawable.refresh);
+         
+         mActionbarRefreshProgress.setVisibility(View.VISIBLE);
+         mActionbarRefresh.setVisibility(View.GONE);
+    }
+    private Handler SearchThreadHandler = new Handler() {
+        public void handleMessage(Message msg) {
+        	switch(msg.what){
+            case 0:
+            	showFeed(search.get_Feed());
+            	if(mCurrentHTMLContent.equals("display")){
+            		
+            		new Thread(getURLContent_Thread).start();      		
+            	}
+            break;
+            default:
+            break;
+            }
+        	mActionbarRefresh.setVisibility(View.VISIBLE);
+        	mActionbarRefreshProgress.setVisibility(View.GONE);
+        }
+    };
+    
+    
+    private Runnable Search = new Runnable(){
+    	public void run(){
+    		search.Search() ;  	   
+    		SearchThreadHandler.sendEmptyMessage(0);
+    	}
+    };
+    
+    private Runnable getURLContent_Thread = new Runnable(){
+    	
+        public void run(){
+        
+        	List<HNPost> mPosts = mFeed.getPosts();
+        	
+        	HNFeedParser parser = new HNFeedParser();
+     
+        	for(int i=0; i<mPosts.size(); i++){
+        		HNPost post = mPosts.get(i);
+        		post.setContent(parser.getURLContent(post.getURL()));
+        		getURLContent_ThreadHandler.sendEmptyMessage(0);
+        	}               	
+        }
+     };
+     
+     private Handler getURLContent_ThreadHandler = new Handler() {
+    	 
+         public void handleMessage(Message msg) {
+         	switch(msg.what){
+         		case 0:
+         			showFeed(mFeed);
+         			break;
+         		default:
+         			break;
+         	}
+         }
+     };
+ 
+    
     @Override
     protected void onResume() {
         super.onResume();
         
+        boolean registeredUserChanged = mFeed.getUserAcquiredFor() != null && (!mFeed.getUserAcquiredFor()
+                .equals(Settings.getUserName(this)));
+        
         // We want to reload the feed if a new user logged in
-        if (HNCredentials.isInvalidated() || 
-                !mFeed.getUserAcquiredFor()
-                    .equals(Settings.getUserName(this))) {
+        if (HNCredentials.isInvalidated() || registeredUserChanged) {
             showFeed(new HNFeed(new ArrayList<HNPost>(), null, ""));
             startFeedLoading();
         }
@@ -137,9 +359,26 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         if(refreshBackgroundColor())
         	mPostsListAdapter.notifyDataSetChanged();
         
+        if(refreshHTMLContent()){       	
+        	
+        	if(mCurrentHTMLContent.equals("display")){
+        		
+        		new Thread(getURLContent_Thread).start();      		
+        	}
+        	else{
+        		List<HNPost> mPosts = mFeed.getPosts();
+        		for(int i=0; i<mPosts.size(); i++){
+        			
+        			mPosts.get(i).setContent("");
+        		}       		
+        		showFeed(mFeed);
+        	}
+        	
+        }
         // restore vertical scrolling position if applicable
         if (mListState != null)
             mPostsList.onRestoreInstanceState(mListState);
+        
         mListState = null;
     }
     
@@ -150,10 +389,27 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 
     @Click(R.id.actionbar_refresh_container)
     void refreshClicked() {
+    	search.set_keyword("");
         if (HNFeedTaskMainFeed.isRunning(getApplicationContext()))
             HNFeedTaskMainFeed.stopCurrent(getApplicationContext());
         else
             startFeedLoading();
+    }
+    @Click(R.id.Magnifier)
+    void open_search() {
+    	turn = !turn;
+    	search_appear(turn);
+    }
+    
+    void search_appear(boolean turn)
+    {
+    	if(turn){
+    	  main_search_text.setVisibility(View.VISIBLE);
+    	  main_search.setVisibility(View.VISIBLE);}
+    	else{
+      	  main_search_text.setVisibility(View.INVISIBLE);
+      	  main_search.setVisibility(View.INVISIBLE);}
+    		
     }
 
     @Click(R.id.actionbar_more)
@@ -183,9 +439,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                 popupWindow.dismiss();
             }
         });
-        		
-             
-        
+
         Button aboutButton = (Button) moreContentView.findViewById(R.id.main_more_content_about);
         aboutButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -201,18 +455,29 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     @Override
     public void onTaskFinished(int taskCode, TaskResultCode code, HNFeed result, Object tag) {
         if (taskCode == TASKCODE_LOAD_FEED) {
-            if (code.equals(TaskResultCode.Success) && mPostsListAdapter != null)
-                showFeed(result);
+            if (code.equals(TaskResultCode.Success) && mPostsListAdapter != null){
+                showFeed(result);}
+            else if (!code.equals(TaskResultCode.Success))
+                Toast.makeText(this, getString(R.string.
+                        error_unable_to_retrieve_feed), Toast.LENGTH_SHORT).show();
 
-			mActionbarRefreshProgress.setVisibility(View.GONE);
-			mActionbarRefresh.setVisibility(View.VISIBLE);
+            mActionbarRefreshProgress.setVisibility(View.GONE);
+            mActionbarRefresh.setVisibility(View.VISIBLE);
         } else if (taskCode == TASKCODE_LOAD_MORE_POSTS) {
+            if (!code.equals(TaskResultCode.Success))
+                Toast.makeText(this, getString(R.string.
+                        error_unable_to_load_more), Toast.LENGTH_SHORT).show();
+
             mFeed.appendLoadMoreFeed(result);
             mPostsListAdapter.notifyDataSetChanged();
+ 
         }
 
     }
-
+    public static MainActivity getInstance()
+    {
+    	return instance;
+    }
     private void showFeed(HNFeed feed) {
         mFeed = feed;
         mPostsListAdapter.notifyDataSetChanged();
@@ -226,14 +491,27 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     }
     
     class GetLastHNFeedTask extends FileUtil.GetLastHNFeedTask {
-        protected void onPostExecute(HNFeed result) {
-            if (result == null) {
-                // TODO: display "Loading..." instead
-            } else if (result.getUserAcquiredFor().equals(Settings
-                    .getUserName(App.getInstance())))
-                showFeed(result);
-        }
-    }
+		ProgressDialog progress;
+
+		@Override
+		protected void onPreExecute() {
+			progress = new ProgressDialog(MainActivity.this);
+			progress.setMessage("Loading");
+			progress.show();
+		}
+
+		protected void onPostExecute(HNFeed result) {
+			if (progress != null && progress.isShowing())
+				progress.dismiss();
+
+			if (result != null
+					&& result.getUserAcquiredFor() != null
+					&& result.getUserAcquiredFor().equals(
+							Settings.getUserName(App.getInstance())))
+				showFeed(result);
+		}
+	}
+
 
     private void startFeedLoading() {
         HNFeedTaskMainFeed.startOrReattach(this, this, TASKCODE_LOAD_FEED);
@@ -242,8 +520,28 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         mActionbarRefreshProgress.setVisibility(View.VISIBLE);
         mActionbarRefresh.setVisibility(View.GONE);
     }
+    
+    private boolean refreshHTMLContent(){
+    	
+    	final String htmlContent = Settings.getHtmlContent(this);
+    	if((mCurrentHTMLContent == null) || !mCurrentHTMLContent.equals(htmlContent)){
+    		mCurrentHTMLContent = htmlContent;
+    		if(htmlContent.equals(getString(R.string.pref_htmlcontent_display))){
+    			
+    			mCurrentHTMLContent = "display";
+    		}else{
+    			
+    			mCurrentHTMLContent = "dismiss";
+    		} 
+    		
+    		return true;
+    	}  	
+    	else{
+    		
+    		return false;
+    	}
+    }
 
-   
     private boolean refreshFontSizes() {
         final String fontSize = Settings.getFontSize(this);
         if ((mCurrentFontSize == null) || (!mCurrentFontSize.equals(fontSize))) {
@@ -285,10 +583,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         }
     }       
 
-    
-    
-
-	private void vote(String voteURL, HNPost post) {
+    private void vote(String voteURL, HNPost post) {
         HNVoteTask.start(voteURL, MainActivity.this, new VoteTaskFinishedHandler(), TASKCODE_VOTE, post);
     }
     
@@ -321,6 +616,12 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         }
     }
 
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+    	moreClicked();
+    	return false;
+    }
+    
     class PostsAdapter extends BaseAdapter {
 
         private static final int VIEWTYPE_POST = 0;
@@ -368,39 +669,38 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                 case VIEWTYPE_POST:
                     if (convertView == null) {
                         convertView = (LinearLayout) mInflater.inflate(R.layout.main_list_item, null);
-                        //convertView1 = (FrameLayout) mInflater.inflate(R.layout.settings, null);         //ramesh
                         PostViewHolder holder = new PostViewHolder();
                         holder.titleView = (TextView) convertView.findViewById(R.id.main_list_item_title);
+                        holder.contentView = (TextView) convertView.findViewById(R.id.main_list_item_content);
                         holder.urlView = (TextView) convertView.findViewById(R.id.main_list_item_url);
                         holder.textContainer = (LinearLayout) convertView.findViewById(R.id.main_list_item_textcontainer);
                         holder.commentsButton = (Button) convertView.findViewById(R.id.main_list_item_comments_button);
                         holder.commentsButton.setTypeface(FontHelper.getComfortaa(MainActivity.this, false));
                         holder.commentsContainer= (LinearLayout) convertView.findViewById(R.id.main_list_item_comments_container); //ramesh
-                       // holder.settingbgcolor= (FrameLayout) convertView1.findViewById(R.id.actionbar);
                         holder.pointsView = (TextView) convertView.findViewById(R.id.main_list_item_points);
                         holder.pointsView.setTypeface(FontHelper.getComfortaa(MainActivity.this, true));
                         convertView.setTag(holder);
-                      //  convertView1.setTag(holder);
                     }
 
                     HNPost item = getItem(position);
                     PostViewHolder holder = (PostViewHolder) convertView.getTag();
                     holder.titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeTitle);
                     holder.titleView.setText(item.getTitle());
+                    holder.contentView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeDetails);
+                    holder.contentView.setText(item.getContent());
                     holder.urlView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeDetails);
                     holder.urlView.setText(item.getURLDomain());
-                    holder.pointsView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeDetails); 
-                    
+                    holder.pointsView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeDetails);
+
                     holder.textContainer.setBackgroundColor(mColorDetails);  // Ramesh kumar coding part for change background color using radio button
                     holder.commentsContainer.setBackgroundColor(mColorDetails);
-                   // holder.settingbgcolor.setBackgroundColor(mColorDetails);
                     
                     if (item.getPoints() != BaseHTMLParser.UNDEFINED)
                         holder.pointsView.setText(item.getPoints() + "");
                     else
                         holder.pointsView.setText("-");
 
-                    holder.commentsButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeTitle);
+                    holder.commentsButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeTitle);                 
                     if (item.getCommentsCount() != BaseHTMLParser.UNDEFINED) {
                         holder.commentsButton.setVisibility(View.VISIBLE);
                         holder.commentsButton.setText(item.getCommentsCount() + "");
@@ -413,26 +713,36 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                             startActivity(i);
                         }
                     });
-                    holder.textContainer.setOnClickListener(new OnClickListener() {
-                        public void onClick(View v) {
-                            if (Settings.getHtmlViewer(MainActivity.this).equals(
-                                getString(R.string.pref_htmlviewer_browser)))
-                                openURLInBrowser(getArticleViewURL(getItem(position)), MainActivity.this);
-                            else
-                                openPostInApp(getItem(position), null, MainActivity.this);
-                        }
-                    });
-                    holder.textContainer.setOnLongClickListener(new OnLongClickListener() {
-                        public boolean onLongClick(View v) {
-                            final HNPost post = getItem(position);
 
-                            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                            LongPressMenuListAdapter adapter = new LongPressMenuListAdapter(post);
-                            builder.setAdapter(adapter, adapter).show();
-                            return true;
-                        }
-                    });
-                    break;
+                holder.textContainer.setOnClickListener(new OnClickListener() {
+                    public void onClick(View v) {
+                        if (Settings.getHtmlViewer(MainActivity.this).equals(
+                            getString(R.string.pref_htmlviewer_browser)))
+                            openURLInBrowser(getArticleViewURL(getItem(position)), MainActivity.this);
+                        else
+                        	openPostInApp(position,getItem(position), null, MainActivity.this);
+                    }
+                });
+				holder.textContainer
+						.setOnLongClickListener(new OnLongClickListener() {
+							public boolean onLongClick(View v) {
+								
+								System.out.println("onLongClick");
+								if(!startSlide){
+									
+									longClick = true;
+									final HNPost post = getItem(position);
+									addFavoritePost(position);
+									AlertDialog.Builder builder = new AlertDialog.Builder(
+											MainActivity.this);
+		                            LongPressMenuListAdapter adapter = new LongPressMenuListAdapter(post,position);
+									builder.setAdapter(adapter, adapter).show();
+									return true;
+								}
+								return false;
+							}
+						});
+				break;
 
                 case VIEWTYPE_LOADMORE:
                     // I don't use the preloaded convertView here because it's
@@ -458,6 +768,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                                 TASKCODE_LOAD_MORE_POSTS);
                         }
                     });
+
                     break;
                 default:
                     break;
@@ -469,12 +780,14 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 
     private class LongPressMenuListAdapter implements ListAdapter, DialogInterface.OnClickListener {
 
+    	int pos;
         HNPost mPost;
         boolean mIsLoggedIn;
         boolean mUpVotingEnabled;
         ArrayList<CharSequence> mItems;
 
-        public LongPressMenuListAdapter(HNPost post) {
+        public LongPressMenuListAdapter(HNPost post,int position) {
+        	pos=position;
             mPost = post;
             mIsLoggedIn = Settings.isUserLoggedIn(MainActivity.this);
             mUpVotingEnabled = !mIsLoggedIn
@@ -486,7 +799,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                 mItems.add(getString(R.string.upvote));
             else
                 mItems.add(getString(R.string.already_upvoted));
-            mItems.addAll(Arrays.asList(
+            	mItems.addAll(Arrays.asList(
                 getString(R.string.pref_htmlprovider_original_url),
                 getString(R.string.pref_htmlprovider_viewtext),
                 getString(R.string.pref_htmlprovider_google),
@@ -569,10 +882,9 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                     break;
                 case 1:
                 case 2:
-                	break;
                 case 3:
                 case 4:
-                    openPostInApp(mPost, getItem(item).toString(), MainActivity.this);
+                    openPostInApp( pos , mPost, getItem(item).toString(), MainActivity.this);
                     break;
                 case 5:
                     openURLInBrowser(getArticleViewURL(mPost), MainActivity.this);
@@ -593,29 +905,147 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         a.startActivity(browserIntent);
     }
 
-    public static void openPostInApp(HNPost post, String overrideHtmlProvider, Activity a) {
+    public static void openPostInApp(int position, HNPost post, String overrideHtmlProvider, Activity a) {
+
         Intent i = new Intent(a, ArticleReaderActivity_.class);
+        i.putExtra(ArticleReaderActivity.EXTRA_POSITION, position);
         i.putExtra(ArticleReaderActivity.EXTRA_HNPOST, post);
         if (overrideHtmlProvider != null)
             i.putExtra(ArticleReaderActivity.EXTRA_HTMLPROVIDER_OVERRIDE, overrideHtmlProvider);
-        a.startActivity(i);
+        a.startActivityForResult(i,NEXTPAGE);
+       // a.startActivity(i);
     }
-    
-  
+    @Override 
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) 
+    {	
+    	if(requestCode == NEXTPAGE && resultCode == RESULT_OK){
+    		int position = (int) data.getIntExtra(ARTICAL_POSITION,-1);  		
+    		HNPost post = mFeed.getPosts().get(position);
+    		openPostInApp( position, post, null, MainActivity.this );
+    	}
+    }
     static class PostViewHolder {
-        public Object vewcolor;
-		TextView titleView;
+        TextView titleView;
         TextView urlView;
         TextView pointsView;
         TextView commentsCountView;
+        TextView contentView;
         LinearLayout commentsContainer;
         LinearLayout textContainer;
-        FrameLayout settingbgcolor;
         Button commentsButton;
-        
-           
-
-      
     }
+	public boolean dispatchTouchEvent(MotionEvent ev) {
+		// Log.d("ddd",String.valueOf(ev.getAction()));
+		boolean result = onTouch(ev);
+		if (!result)
+			return super.dispatchTouchEvent(ev);
+		return result;
+	}
+	public boolean onTouch(MotionEvent event) {
+
+		if (event.getAction() == MotionEvent.ACTION_UP) {
+			if (longClick){
+				longClick = false;
+				return false;
+			}
+			
+			if (startSlide) {
+				drag_Ex = event.getX();
+				drag_Ey = event.getY();
+				if (Math.abs(drag_Ey-drag_Sy)<=40&&drag_Ex - drag_Sx >= 100) {
+					mNav.toggleLeftDrawer();
+					return true;
+				}
+				startSlide = false;
+			}
+
+			return false;
+		}
+		if (event.getAction() == MotionEvent.ACTION_MOVE) {
+			if (!startSlide) {
+				if (Math.sqrt(Math.pow(event.getX() - drag_Sx,2)
+						+ Math.pow(event.getY() - drag_Sy, 2)) >= 10.0) {
+					drag_Sx = event.getX();
+					drag_Sy = event.getY();
+					startSlide = true;
+				}
+			}
+			return false;
+
+		}
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			startSlide = false;
+			drag_Sx = event.getX();
+			drag_Sy = event.getY();
+			return false;
+		}
+
+		return false;
+
+	}
+	private void initFavoritePosts() {
+		fFeed=getSharedPreferences("DATA",0);
+		String storeJSON=fFeed.getString("postData", "");
+		favoritePosts=new HNFeed(new ArrayList<HNPost>(), null, "");
+		if(storeJSON.length()>0){
+	    	try {
+				postJsonArray = new JSONArray(storeJSON);
+		    	for(int n=0;n<postJsonArray.length();n++){
+		    		JSONObject temp=postJsonArray.getJSONObject(n);
+		    		favoritePosts.addPost(new HNPost(temp.getString("url"),temp.getString("title"),temp.getString("urlDomain"),temp.getString("author"),temp.getString("postID"),temp.getInt("commentsCount"),temp.getInt("points"),null));
+		    	}
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		
+	}
+	public boolean addFavoritePost(int nPost)  {
+    	fFeed=getSharedPreferences("DATA",0);
+    	if(postJsonArray==null){
+    		postJsonArray = new JSONArray();
+    	}
+    	HNPost temp=mFeed.getPosts().get(nPost);
+    	if(!isPostinFavorite(temp.getURL())){
+	    	//New hnPOST
+	        JSONObject jsonObject = new JSONObject();
+	        try {
+				jsonObject.put("url", temp.getURL());
+		        jsonObject.put("title", temp.getTitle());
+		        jsonObject.put("urlDomain", temp.getURLDomain());
+		        jsonObject.put("author", temp.getAuthor());
+		        jsonObject.put("postID", temp.getPostID());
+		        jsonObject.put("commentsCount", temp.getCommentsCount()); 
+		        jsonObject.put("points", temp.getPoints());
+		        jsonObject.put("upvoteURL", null);         
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}               
+	        //put in jsonArray
+	        postJsonArray.put(jsonObject);
+	        fFeed.edit().putString("postData", postJsonArray.toString()).commit();
+	        
+	    	favoritePosts.addPost(temp); 
+	    	return true;
+    	}
+    	return false;
+    	
+    }
+    public  boolean isPostinFavorite(String postUrl)  {
+    	for(int p=0;p<favoritePosts.getPosts().size();p++){
+    		if(favoritePosts.getPosts().get(p).getURL().equals(postUrl))return true;
+    	}
+    	return false;
+    }
+    private void showFavoritePosts() {
+        showFeed(favoritePosts);
+    }
+    
+    
+
+
 
 }

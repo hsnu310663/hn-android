@@ -37,7 +37,17 @@
         <item>@string/pref_htmlviewer_browser</item>
     </string-array>
     
-     <!--  Ramesh kumar coding part for change background color using radio button   -->
+    <string name="pref_title_htmlcontent">View HTML Content within &#8230;</string>
+    <string name="pref_default_htmlcontent">Dismiss content of HTML</string>
+    <string name="pref_htmlcontent_display">Display content of HTML</string>
+    <string name="pref_htmlcontent_dismiss">Dismiss content of HTML</string>
+    
+    <string-array name="pref_array_htmlcontent">
+        <item>@string/pref_htmlcontent_display</item>
+        <item>@string/pref_htmlcontent_dismiss</item>
+    </string-array>
+    
+    <!--  Ramesh kumar coding part for change background color using radio button   -->
         
     <string name="pref_title_background_color">Select Background Color</string>
     <string name="pref_default_background_color">RED</string>
@@ -51,10 +61,4 @@
         <item>@string/pref_background_color_green</item>
     </string-array>
 
-  
-    
-
 </resources>
-
-
-

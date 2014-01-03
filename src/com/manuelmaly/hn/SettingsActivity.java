@@ -12,21 +12,17 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageView;
 
-
 import com.manuelmaly.hn.login.LoginActivity_;
 import com.manuelmaly.hn.server.HNCredentials;
 import com.manuelmaly.hn.util.Run;
-
-
 
 public class SettingsActivity extends PreferenceActivity implements OnSharedPreferenceChangeListener {
 
     public enum FONTSIZE {
         FONTSIZE_SMALL, FONTSIZE_NORMAL, FONTSIZE_BIG
     }
-  
-  // Ramesh kumar coding part for change background color using radio button
-    
+
+    // Ramesh kumar coding part for change background color using radio button
     public enum COLOR {
     	RED, BLUE, GREEN
     }
@@ -40,6 +36,10 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
 
     public enum HTMLVIEWER {
         HTMLVIEWER_WITHINAPP, HTMLVIEWER_BROWSER
+    }
+    
+    public enum HTMLCONTENT {
+    	HTMLCONTENT_DISPLAY, HTMLVIEWER_DISAPPEAR
     }
 
     private static final int REQUEST_LOGIN = 100;
@@ -56,16 +56,18 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
         Preference fontSizePref = findPreference(Settings.PREF_FONTSIZE);
         fontSizePref.setSummary(sharedPref.getString(Settings.PREF_FONTSIZE, "Undefined"));
         
-      // Ramesh kumar coding part for change background color using radio button
-        
+        // Ramesh kumar coding part for change background color using radio button
         Preference colorPref = findPreference(Settings.pref_COLOR);
         colorPref.setSummary(sharedPref.getString(Settings.pref_COLOR, "Undefined"));
-        
+
         Preference htmlProviderPref = findPreference(Settings.PREF_HTMLPROVIDER);
         htmlProviderPref.setSummary(sharedPref.getString(Settings.PREF_HTMLPROVIDER, "Undefined"));
 
         Preference htmlViewerPref = findPreference(Settings.PREF_HTMLVIEWER);
         htmlViewerPref.setSummary(sharedPref.getString(Settings.PREF_HTMLVIEWER, "Undefined"));
+        
+        Preference htmlContentPref = findPreference(Settings.PREF_CONTENT);
+        htmlContentPref.setSummary(sharedPref.getString(Settings.PREF_CONTENT, "Undefined"));
 
         mUserPref= (UserPreference) findPreference(Settings.PREF_USER);
         mUserPref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
@@ -87,27 +89,22 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
         });
     }
 
-  //  Ramesh kumar coding part for change background color using radio button  
-    
     @SuppressWarnings("deprecation")
     public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
         Run.onUiThread(new Runnable() {
             @Override
             public void run() {
                 if (key.equals(Settings.PREF_FONTSIZE) || key.equals(Settings.PREF_HTMLPROVIDER)
-                    || key.equals(Settings.PREF_HTMLVIEWER)|| key.equals(Settings.pref_COLOR))
+                    || key.equals(Settings.PREF_HTMLVIEWER)||key.equals(Settings.PREF_CONTENT)|| key.equals(Settings.pref_COLOR))
                     findPreference(key).setSummary(sharedPreferences.getString(key, "Undefined"));
                 else if (key.equals(Settings.PREF_USER)) {
                     HNCredentials.invalidate();
                     updateUserItem();
                 }
-              }
+            }
         }, this);
     }
-    
-         
-    
-    
+
     private void updateUserItem() {
         String userName = Settings.getUserName(this);
         if (!userName.equals(""))
@@ -143,10 +140,5 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
 
         super.onActivityResult(requestCode, resultCode, data);
     }
-    
-    
- }
-        	
-    
 
-
+}

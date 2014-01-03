@@ -46,6 +46,8 @@ public class HNFeedParser extends BaseHTMLParser<HNFeed> {
         String urlDomain = null;
         String postID = null;
         String upvoteURL = null;
+        String content = null;//part of content
+        
 
         boolean endParsing = false;
         for (int row = 0; row < tableRows.size(); row++) {
@@ -61,7 +63,7 @@ public class HNFeedParser extends BaseHTMLParser<HNFeed> {
                     }
                     
                     title = e1.text();
-                    url = HNHelper.resolveRelativeHNURL(e1.attr("href"));
+                    url = HNHelper.resolveRelativeHNURL(e1.attr("href"));               
                     urlDomain = getDomainName(url);
                     
                     Element e4 = rowElement.select("tr > td:eq(1) a").first();
@@ -85,8 +87,10 @@ public class HNFeedParser extends BaseHTMLParser<HNFeed> {
                     }
                     else
                         commentsCount = BaseHTMLParser.UNDEFINED;
-
-                    posts.add(new HNPost(url, title, urlDomain, author, postID, commentsCount, points, upvoteURL));
+                    
+                    HNPost post = new HNPost(url, title, urlDomain, author, postID, commentsCount, points, upvoteURL);
+                    post.setContent(content);
+                    posts.add(post);
                     break;
                 default:
                     break;
@@ -99,6 +103,4 @@ public class HNFeedParser extends BaseHTMLParser<HNFeed> {
         return new HNFeed(posts, nextPageURL, Settings
                 .getUserName(App.getInstance()));
     }
-   
-
 }
