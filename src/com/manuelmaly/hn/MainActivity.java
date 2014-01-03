@@ -141,6 +141,11 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     String mCurrentHTMLContent = null;
     int mFontSizeTitle;
     int mFontSizeDetails;
+    
+    // Ramesh kumar coding part for change background color using radio button
+    String mCurrentColor = null;
+    int mColorDetails;
+    
     public static MainActivity instance;
     private static final int TASKCODE_LOAD_FEED = 10;
     private static final int TASKCODE_LOAD_MORE_POSTS = 20;
@@ -350,6 +355,10 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         if (refreshFontSizes())
         	mPostsListAdapter.notifyDataSetChanged();
         
+        //Ramesh kumar coding part for change background color using radio button
+        if(refreshBackgroundColor())
+        	mPostsListAdapter.notifyDataSetChanged();
+        
         if(refreshHTMLContent()){       	
         	
         	if(mCurrentHTMLContent.equals("display")){
@@ -552,6 +561,33 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         	return false;
         }
     }
+    
+    // Ramesh kumar coding part for change background color using radio button
+    
+    
+    private boolean refreshBackgroundColor() {
+        final String bgcolor = Settings.getColor(this);
+        if ((mCurrentColor == null) || (!mCurrentColor.equals(bgcolor))) {
+        	mCurrentColor = bgcolor;
+        	if (bgcolor.equals(getString(R.string.pref_background_color_Origin))) {
+ 	            mColorDetails= 0xffffeddb;
+ 	        } else if (bgcolor.equals(getString(R.string.pref_background_color_Red))) {
+	            mColorDetails= 0xffff7f7f;
+	        } else if (bgcolor.equals(getString(R.string.pref_background_color_Blue))) {
+	           mColorDetails=0xff9999cc;
+	        } else if (bgcolor.equals(getString(R.string.pref_background_color_Green))) {
+	            mColorDetails=0xffb2ffb2;
+        	} else if (bgcolor.equals(getString(R.string.pref_background_color_Yellow))) {
+        		mColorDetails=0xffffffcc;
+	        } else if (bgcolor.equals(getString(R.string.pref_background_color_Gray))) {
+	        	mColorDetails=0xffdddddd;
+    		}
+	        return true;
+        } else {
+        	return false;
+        	
+        }
+    }       
 
     private void vote(String voteURL, HNPost post) {
         HNVoteTask.start(voteURL, MainActivity.this, new VoteTaskFinishedHandler(), TASKCODE_VOTE, post);
@@ -643,10 +679,10 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                         holder.titleView = (TextView) convertView.findViewById(R.id.main_list_item_title);
                         holder.contentView = (TextView) convertView.findViewById(R.id.main_list_item_content);
                         holder.urlView = (TextView) convertView.findViewById(R.id.main_list_item_url);
-                        holder.textContainer = (LinearLayout) convertView
-                            .findViewById(R.id.main_list_item_textcontainer);
+                        holder.textContainer = (LinearLayout) convertView.findViewById(R.id.main_list_item_textcontainer);
                         holder.commentsButton = (Button) convertView.findViewById(R.id.main_list_item_comments_button);
                         holder.commentsButton.setTypeface(FontHelper.getComfortaa(MainActivity.this, false));
+                        holder.commentsContainer= (LinearLayout) convertView.findViewById(R.id.main_list_item_comments_container); //ramesh
                         holder.pointsView = (TextView) convertView.findViewById(R.id.main_list_item_points);
                         holder.pointsView.setTypeface(FontHelper.getComfortaa(MainActivity.this, true));
                         convertView.setTag(holder);
@@ -661,6 +697,10 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
                     holder.urlView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeDetails);
                     holder.urlView.setText(item.getURLDomain());
                     holder.pointsView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizeDetails);
+
+                    holder.textContainer.setBackgroundColor(mColorDetails);  // Ramesh kumar coding part for change background color using radio button
+                    holder.commentsContainer.setBackgroundColor(mColorDetails);
+                    
                     if (item.getPoints() != BaseHTMLParser.UNDEFINED)
                         holder.pointsView.setText(item.getPoints() + "");
                     else
@@ -895,6 +935,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         TextView pointsView;
         TextView commentsCountView;
         TextView contentView;
+        LinearLayout commentsContainer;
         LinearLayout textContainer;
         Button commentsButton;
     }

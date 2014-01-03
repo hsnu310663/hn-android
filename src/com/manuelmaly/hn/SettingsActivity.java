@@ -22,6 +22,11 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
         FONTSIZE_SMALL, FONTSIZE_NORMAL, FONTSIZE_BIG
     }
 
+    // Ramesh kumar coding part for change background color using radio button
+    public enum COLOR {
+    	RED, BLUE, GREEN
+    }
+    
     public enum HTMLPROVIDER {
         HTMLPROVIDER_ORIGINAL_ARTICLE_URL,
         HTMLPROVIDER_GOOGLE,
@@ -50,6 +55,10 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
 
         Preference fontSizePref = findPreference(Settings.PREF_FONTSIZE);
         fontSizePref.setSummary(sharedPref.getString(Settings.PREF_FONTSIZE, "Undefined"));
+        
+        // Ramesh kumar coding part for change background color using radio button
+        Preference colorPref = findPreference(Settings.pref_COLOR);
+        colorPref.setSummary(sharedPref.getString(Settings.pref_COLOR, "Undefined"));
 
         Preference htmlProviderPref = findPreference(Settings.PREF_HTMLPROVIDER);
         htmlProviderPref.setSummary(sharedPref.getString(Settings.PREF_HTMLPROVIDER, "Undefined"));
@@ -86,7 +95,7 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
             @Override
             public void run() {
                 if (key.equals(Settings.PREF_FONTSIZE) || key.equals(Settings.PREF_HTMLPROVIDER)
-                    || key.equals(Settings.PREF_HTMLVIEWER)||key.equals(Settings.PREF_CONTENT))
+                    || key.equals(Settings.PREF_HTMLVIEWER)||key.equals(Settings.PREF_CONTENT)|| key.equals(Settings.pref_COLOR))
                     findPreference(key).setSummary(sharedPreferences.getString(key, "Undefined"));
                 else if (key.equals(Settings.PREF_USER)) {
                     HNCredentials.invalidate();

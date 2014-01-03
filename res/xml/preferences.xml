@@ -7,6 +7,17 @@
         android:entries="@array/pref_array_fontsizes"
         android:entryValues="@array/pref_array_fontsizes"
         android:defaultValue="@string/pref_default_fontsize" />
+    
+	<!-- Ramesh kumar coding part for change background color using radio button -->
+	
+    <ListPreference                                               
+        android:key="pref_background_color"                                  
+        android:title="@string/pref_title_background_color"
+        android:dialogTitle="@string/pref_title_background_color"
+        android:entries="@array/pref_array_background_color"
+        android:entryValues="@array/pref_array_background_color"
+        android:defaultValue="pref_default_background_color" />   
+        
     <ListPreference
         android:key="pref_htmlprovider"
         android:title="@string/pref_title_htmlprovider"
