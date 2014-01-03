@@ -50,15 +50,21 @@
     <!--  Ramesh kumar coding part for change background color using radio button   -->
         
     <string name="pref_title_background_color">Select Background Color</string>
-    <string name="pref_default_background_color">RED</string>
+    <string name="pref_default_background_color">ORIGIN</string>
+    <string name="pref_background_color_Origin">ORIGIN</string>
     <string name="pref_background_color_Red">RED</string>
+    <string name="pref_background_color_Green">GREEN</string>
     <string name="pref_background_color_Blue">BLUE</string>
-    <string name="pref_background_color_green">GREEN</string>
+    <string name="pref_background_color_Yellow">YELLOW</string>
+    <string name="pref_background_color_Gray">GRAY</string>
     
-    <string-array name="pref_array_background_color">                     
+    <string-array name="pref_array_background_color">                      
+        <item>@string/pref_background_color_Origin</item>                    
         <item>@string/pref_background_color_Red</item>
+        <item>@string/pref_background_color_Green</item>
         <item>@string/pref_background_color_Blue</item>
-        <item>@string/pref_background_color_green</item>
+        <item>@string/pref_background_color_Yellow</item>
+        <item>@string/pref_background_color_Gray</item>
     </string-array>
 
 </resources>

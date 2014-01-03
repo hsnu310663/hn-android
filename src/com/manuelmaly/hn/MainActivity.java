@@ -569,13 +569,19 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         final String bgcolor = Settings.getColor(this);
         if ((mCurrentColor == null) || (!mCurrentColor.equals(bgcolor))) {
         	mCurrentColor = bgcolor;
-	        if (bgcolor.equals(getString(R.string.pref_background_color_Red))) {
+        	if (bgcolor.equals(getString(R.string.pref_background_color_Origin))) {
+ 	            mColorDetails= 0xffffeddb;
+ 	        } else if (bgcolor.equals(getString(R.string.pref_background_color_Red))) {
 	            mColorDetails= 0xffff7f7f;
 	        } else if (bgcolor.equals(getString(R.string.pref_background_color_Blue))) {
 	           mColorDetails=0xff9999cc;
-	        } else {
+	        } else if (bgcolor.equals(getString(R.string.pref_background_color_Green))) {
 	            mColorDetails=0xffb2ffb2;
-	        }
+        	} else if (bgcolor.equals(getString(R.string.pref_background_color_Yellow))) {
+        		mColorDetails=0xffffffcc;
+	        } else if (bgcolor.equals(getString(R.string.pref_background_color_Gray))) {
+	        	mColorDetails=0xffdddddd;
+    		}
 	        return true;
         } else {
         	return false;
