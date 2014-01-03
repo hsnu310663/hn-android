@@ -698,7 +698,6 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 									
 									longClick = true;
 									final HNPost post = getItem(position);
-									addFavoritePost(position);
 									AlertDialog.Builder builder = new AlertDialog.Builder(
 											MainActivity.this);
 		                            LongPressMenuListAdapter adapter = new LongPressMenuListAdapter(post,position);
