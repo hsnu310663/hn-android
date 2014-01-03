@@ -172,9 +172,9 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         mPostsList.setEmptyView(mEmptyListPlaceholder);
         mPostsList.setAdapter(mPostsListAdapter);
 
-          mEmptyListPlaceholder.setTypeface(FontHelper.getComfortaa(this, true));
+        mEmptyListPlaceholder.setTypeface(FontHelper.getComfortaa(this, true));
 		  
-		  mNav = new SimpleSideDrawer(this);
+		mNav = new SimpleSideDrawer(this);
 		mNav.setLeftBehindContentView(R.layout.slide_menu_drawer);
 
 		orderByTime = (TextView) findViewById(R.id.orderByTime);
@@ -282,6 +282,10 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         	switch(msg.what){
             case 0:
             	showFeed(search.get_Feed());
+            	if(mCurrentHTMLContent.equals("display")){
+            		
+            		new Thread(getURLContent_Thread).start();      		
+            	}
             break;
             default:
             break;
