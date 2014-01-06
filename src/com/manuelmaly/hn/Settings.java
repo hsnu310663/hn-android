@@ -11,7 +11,7 @@ public class Settings {
     public static final String PREF_HTMLPROVIDER = "pref_htmlprovider";
     public static final String PREF_HTMLVIEWER = "pref_htmlviewer";
     public static final String PREF_USER = "pref_user";
-    public static final String PREF_CONTENT = "pref_htmlcontent";
+    public static final String PREF_CONTENT = "pref_htmlcontent"; //------------- kevin's codes. about preference for change mode of web content ----------------
     
     public static final String USER_DATA_SEPARATOR = ":";
     
@@ -38,6 +38,7 @@ public class Settings {
         return sharedPref.getString(PREF_HTMLVIEWER, c.getString(R.string.pref_default_htmlviewer));
     }
     
+    //------------- kevin's codes. about preference for change mode of web content ----------------
     public static String getHtmlContent(Context c) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(c);
         return sharedPref.getString(PREF_CONTENT, c.getString(R.string.pref_default_htmlcontent));

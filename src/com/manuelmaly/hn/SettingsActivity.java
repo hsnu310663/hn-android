@@ -66,6 +66,7 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
         Preference htmlViewerPref = findPreference(Settings.PREF_HTMLVIEWER);
         htmlViewerPref.setSummary(sharedPref.getString(Settings.PREF_HTMLVIEWER, "Undefined"));
         
+        //------------- kevin's codes. about preference for change mode of web content ----------------
         Preference htmlContentPref = findPreference(Settings.PREF_CONTENT);
         htmlContentPref.setSummary(sharedPref.getString(Settings.PREF_CONTENT, "Undefined"));
 
@@ -92,6 +93,8 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
     @SuppressWarnings("deprecation")
     public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
         Run.onUiThread(new Runnable() {
+        	
+        	 //------------- kevin's codes. about preference for change mode of web content ----------------
             @Override
             public void run() {
                 if (key.equals(Settings.PREF_FONTSIZE) || key.equals(Settings.PREF_HTMLPROVIDER)

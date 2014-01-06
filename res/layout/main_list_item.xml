@@ -27,6 +27,7 @@
             android:textSize="18sp"
             android:textStyle="bold" />
         
+         <!--kevin's code about displaying the part of web content -->
          <TextView
             android:id="@+id/main_list_item_content"
             android:layout_width="wrap_content"

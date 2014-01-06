@@ -49,9 +49,11 @@ public class ArticleReaderActivity extends Activity {
     
 	public static final int FEEDNUM = 30;
     
+	// add by CCWang
     private static boolean translateFlag;
-    private static final String HTMLTRANSLATE_PREFIX = "http://translate.google.com.tw/translate?sl=en&tl=zh-TW&prev=_t&hl=zh-TW&ie=UTF-8&u=";
-
+    private static final String HTMLTRANSLATE_PREFIX = "http://translate.google.com.tw/translate?sl=auto&tl=zh-TW&prev=_t&hl=zh-TW&ie=UTF-8&u=";
+    // ..
+    
 	@ViewById(R.id.article_webview)
 	WebView mWebView;
 
@@ -170,7 +172,7 @@ public class ArticleReaderActivity extends Activity {
 				: View.GONE);
 		mActionbarRefresh.setVisibility(loading ? View.GONE : View.VISIBLE);
     }
-
+    //------------- re330's codes -----------------
     @Click(R.id.actionbar_share)
     void moreClicked() {
         mActionbarMore.setSelected(true);
@@ -203,7 +205,7 @@ public class ArticleReaderActivity extends Activity {
                 popupWindow.dismiss();
             }
         });
-
+     
         Button shareButton = (Button) moreContentView.findViewById(R.id.article_more_content_share);
         shareButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -217,6 +219,7 @@ public class ArticleReaderActivity extends Activity {
             }
         });
         
+        //by CCWang, translate button
         Button translateButton = (Button) moreContentView.findViewById(R.id.article_more_content_translate);
         translateButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -226,10 +229,11 @@ public class ArticleReaderActivity extends Activity {
                 popupWindow.dismiss();
             }
         });
+        //..
 
         popupWindow.update(moreContentView.getMeasuredWidth(), moreContentView.getMeasuredHeight());
     }
-
+  //-----------------------------------------
     @SuppressWarnings("deprecation")
     public static String getArticleViewURL(HNPost post, String htmlProvider, Context c) {
         String encodedURL = URLEncoder.encode(post.getURL());
@@ -239,8 +243,10 @@ public class ArticleReaderActivity extends Activity {
             return HTMLPROVIDER_PREFIX_GOOGLE + encodedURL;
         else if (htmlProvider.equals(c.getString(R.string.pref_htmlprovider_instapaper)))
             return HTMLPROVIDER_PREFIX_INSTAPAPER + encodedURL;
+        //modified by CCWang, add translate
         else
-            return (translateFlag?HTMLTRANSLATE_PREFIX:"") + post.getURL();
+            return (translateFlag?HTMLTRANSLATE_PREFIX + encodedURL:post.getURL());
+        //..
     }
 
     @Override
@@ -280,7 +286,7 @@ public class ArticleReaderActivity extends Activity {
             return true;
         }
     }
-
+  //------------- re330's codes -----------------
 	public boolean dispatchTouchEvent(MotionEvent ev) {
 		// Log.d("ddd",String.valueOf(ev.getAction()));
 		boolean result = onTouch(ev);
@@ -296,12 +302,10 @@ public class ArticleReaderActivity extends Activity {
 			multiF = true;
 		}
 		if (event.getAction() == MotionEvent.ACTION_DOWN) {
-			Log.d("ddd", "DOWN");
 			down_x = event.getX();
 			return false;
 		}
 		if (event.getAction() == MotionEvent.ACTION_UP) {
-			Log.d("ddd", "UP");
 			if (multiF) {
 				multiF = false;
 				return false;
@@ -328,5 +332,6 @@ public class ArticleReaderActivity extends Activity {
 		}
 		return false;
 	}
+	//------------------------------------------
 
 }

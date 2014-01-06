@@ -73,7 +73,8 @@ import com.manuelmaly.hn.util.FontHelper;
 import com.navdrawer.SimpleSideDrawer;
 
 @EActivity(R.layout.main)
-
+//102522064 darkmoreTw
+//102522055 re330
 public class MainActivity extends BaseListActivity implements ITaskFinishedHandler<HNFeed> {
 	private SharedPreferences fFeed=null;
 	private JSONArray postJsonArray=null;
@@ -178,7 +179,8 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         mPostsList.setAdapter(mPostsListAdapter);
 
         mEmptyListPlaceholder.setTypeface(FontHelper.getComfortaa(this, true));
-		  
+        	
+        //------------- darkmore's codes -----------------	  
 		mNav = new SimpleSideDrawer(this);
 		mNav.setLeftBehindContentView(R.layout.slide_menu_drawer);
 
@@ -189,6 +191,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 		mAbout = (TextView) findViewById(R.id.mAbout);
 		mFavorite = (TextView) findViewById(R.id.mFavorite);
 
+		// <!--kate's code about sort button -->
 		orderByTime.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -259,14 +262,14 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
 				 mNav.toggleLeftDrawer();
 			}
 		});
-		  
+	    //------------------------------  
 		  
           search = new HNSearch();
           loadIntermediateFeedFromStore();
           startFeedLoading();
           
     }
-
+ // <!--kate's code about search button -->
     @Click(R.id.main_search)
     void main_search()  {
     	open_search();
@@ -307,7 +310,8 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     		SearchThreadHandler.sendEmptyMessage(0);
     	}
     };
-    
+
+    //------------- kevin's codes. Get the part of web content-----------------
     private Runnable getURLContent_Thread = new Runnable(){
     	
         public void run(){
@@ -324,6 +328,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         }
      };
      
+   //------------- kevin's codes. kevin's codes. Display the part of web content -----------------
      private Handler getURLContent_ThreadHandler = new Handler() {
     	 
          public void handleMessage(Message msg) {
@@ -359,6 +364,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         if(refreshBackgroundColor())
         	mPostsListAdapter.notifyDataSetChanged();
         
+       //------------- kevin's codes. refresh the setup when changing the setting -----------------
         if(refreshHTMLContent()){       	
         	
         	if(mCurrentHTMLContent.equals("display")){
@@ -909,7 +915,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         a.startActivity(browserIntent);
     }
-
+  //------------- re330's codes -----------------
     public static void openPostInApp(int position, HNPost post, String overrideHtmlProvider, Activity a) {
 
         Intent i = new Intent(a, ArticleReaderActivity_.class);
@@ -929,6 +935,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     		openPostInApp( position, post, null, MainActivity.this );
     	}
     }
+  //------------------------------
     static class PostViewHolder {
         TextView titleView;
         TextView urlView;
@@ -939,6 +946,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
         LinearLayout textContainer;
         Button commentsButton;
     }
+    //------------- darkmore's codes -----------------
 	public boolean dispatchTouchEvent(MotionEvent ev) {
 		// Log.d("ddd",String.valueOf(ev.getAction()));
 		boolean result = onTouch(ev);
@@ -1048,7 +1056,7 @@ public class MainActivity extends BaseListActivity implements ITaskFinishedHandl
     private void showFavoritePosts() {
         showFeed(favoritePosts);
     }
-    
+    //------------------------------
     
 
 

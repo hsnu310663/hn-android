@@ -1,3 +1,4 @@
+// <!--all by kate -->
 package com.manuelmaly.hn.task;
 
 import java.io.BufferedReader;

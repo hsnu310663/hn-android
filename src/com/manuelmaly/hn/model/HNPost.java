@@ -12,8 +12,8 @@ public class HNPost implements Serializable {
     private int mPoints;
     private String mURLDomain;
     private String mPostID; // as found in link to comments
-    private String mUpvoteURL;
-    private String mContents;
+    private String mUpvoteURL;  
+    private String mContents;  //------------- kevin's codes. about web content ----------------
     
     
     public HNPost(String url, String title, String urlDomain, String author, String postID, int commentsCount, int points, String upvoteURL) {
@@ -56,6 +56,7 @@ public class HNPost implements Serializable {
         return mURLDomain;
     }
     
+  //------------- kevin's codes. about web content ----------------
     public String getContent(){
     	
     	return mContents;
